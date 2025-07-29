@@ -34,3 +34,18 @@
    - `GET /redirect?code=...` — Redirect to the original URL
 
 ---
+
+### How to Run Test Cases Locally
+1. **Make sure dependencies are installed:**
+   ```sh
+   npm install
+   ```
+2. **Run the test suite:**
+   ```sh
+   npm test
+   ```
+3. **View test results in the terminal.**
+
+Test files are located in the `src/tests/` directory and use Jest with Supertest for integration testing.
+
+---
