@@ -1,5 +1,10 @@
 ## URL Shortener Backend
 
+- [Tech Stack](#tech-stack)
+- [How to Run Locally](#how-to-run-locally)
+- [How to Run Test Cases Locally](#how-to-run-test-cases-locally)
+- [Load Testing](#load-testing)
+
 ### Tech Stack
 - Node.js
 - Express.js
@@ -49,3 +54,30 @@
 Test files are located in the `src/tests/` directory and use Jest with Supertest for integration testing.
 
 ---
+
+### Load Testing
+
+#### 10 concurrent users
+
+![Test Plan](./assets/loadingTesting/10users/testplan.png)
+
+**`POST /shorten`**
+
+![HTTP Request](./assets/loadingTesting/10users/request.png)
+
+![Response Time](./assets/loadingTesting/10users/table.png)
+
+| concurrent users | p50  | p90  | p95  | p99  |
+|------------------|------|------|------|------|
+| 10               |4.00  |7.70  |8.00  |8.00  |
+
+
+**`GET /redirect`**
+
+![HTTP Request](./assets/loadingTesting/10users/redirect-request.png)
+
+![Response Time](./assets/loadingTesting/10users/redirect-table.png)
+
+| concurrent users | p50  | p90  | p95  | p99  |
+|------------------|------|------|------|------|
+| 10               |5.00  |7.90  |8.00  |8.00  |
