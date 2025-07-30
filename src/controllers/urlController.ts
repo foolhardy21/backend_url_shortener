@@ -22,7 +22,6 @@ const createShortUrl = (req: Request, res: Response) => {
 }
 
 const getOriginalUrl = (req: Request, res: Response) => {
-    console.log(req.query)
     const code = req.query.code as string
     if (!code) return res.status(400).json({ success: false, message: "Missing required query parameter: code" })
     urlModel.getByShortUrl(code, (err, queryRes) => {
