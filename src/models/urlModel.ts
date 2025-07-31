@@ -4,6 +4,10 @@ const getTotalUrlsCount = (callback: (err: Error | null, queryObj: { count: numb
     db.get("SELECT COUNT(*) AS count FROM url_map", [], callback)
 }
 
+const getLastUrlId = (callback: (err: Error | null, queryObj: { id: number }) => void) => {
+    db.get("SELECT id FROM url_map ORDER BY id DESC LIMIT 1", [], callback)
+}
+
 const create = (urlObj: { originalUrl: string, shortUrl: string }, callback: (err: Error | null) => void) => {
     db.run("INSERT INTO url_map (original_url, short_url) VALUES (?, ?)", [urlObj.originalUrl, urlObj.shortUrl], callback)
 }
@@ -21,4 +25,5 @@ export default {
     create,
     getByShortUrl,
     deleteByOriginalUrl,
+    getLastUrlId,
 }

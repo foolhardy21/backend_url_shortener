@@ -4,12 +4,11 @@ import { generateShortCode } from "../helpers/utils"
 
 const createShortUrl = (req: Request, res: Response) => {
     const { originalUrl } = req.body
-
-    urlModel.getTotalUrlsCount((err, queryObj) => {
+    urlModel.getLastUrlId((err, queryObj) => {
         if (err) {
             console.error("Error while fetching total counts", err)
         } else {
-            const shortUrl = generateShortCode(queryObj.count + 1)
+            const shortUrl = generateShortCode(queryObj.id + 1)
             urlModel.create({ originalUrl, shortUrl }, (err) => {
                 if (err) {
                     return res.status(500).json({ success: false, message: err })
