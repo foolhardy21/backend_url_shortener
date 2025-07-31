@@ -81,3 +81,75 @@ Test files are located in the `src/tests/` directory and use Jest with Supertest
 | concurrent users | p50  | p90  | p95  | p99  |
 |------------------|------|------|------|------|
 | 10               |5.00  |7.90  |8.00  |8.00  |
+
+
+#### 50 concurrent users
+
+![Test Plan](./assets/loadingTesting/50users/testplan.png)
+
+**`POST /shorten`**
+
+![Response Time](./assets/loadingTesting/50users/shorten-table.png)
+
+| concurrent users | p50  | p90  | p95  | p99  |
+|------------------|------|------|------|------|
+| 50               |2.00  |3.00  |3.45  |13.00  |
+
+**`GET /redirect`**
+
+![Response Time](./assets/loadingTesting/50users/redirect-table.png)
+
+| concurrent users | p50  | p90  | p95  | p99  |
+|------------------|------|------|------|------|
+| 50               |1.00  |2.00  |2.00  |7.00  |
+
+
+#### 100 concurrent users
+
+**`POST /shorten`**
+
+![Response Time](./assets/loadingTesting/100users/shorten-table.png)
+
+| concurrent users | p50  | p90  | p95  | p99  |
+|------------------|------|------|------|------|
+| 100              |2.00  |2.00  |3.00  |16.90 |
+
+**`GET /redirect`**
+
+![Response Time](./assets/loadingTesting/100users/redirect-table.png)
+
+| concurrent users | p50  | p90  | p95  | p99  |
+|------------------|------|------|------|------|
+| 100              |1.00  |2.00  |2.00  |2.00  |
+
+
+#### 1000 concurrent users
+
+**`POST /shorten`**
+
+![Response Time (With 42.3 % failure)](./assets/loadingTesting/1000users/shorten-table.png)
+
+| concurrent users   | p50  | p90  | p95  | p99  |
+|--------------------|------|------|------|------|
+| 1000               |2.00  |13.00 |19.95 |26.99 |
+
+**`GET /redirect`**
+
+![Response Time](./assets/loadingTesting/1000users/redirect-table.png)
+
+| concurrent users   | p50  | p90  | p95  | p99  |
+|--------------------|------|------|------|------|
+| 1000 (minus failed |      |      |      |      |
+|shorten = 579).     |1.00  |1.00  |1.00  |4.00  |
+
+
+### Latency Graph
+
+**`POST /shorten`**
+
+![](./assets/loadingTesting/shorten-latency.png)
+
+**`GET /redirect`**
+
+![](./assets/loadingTesting/redirect-latency.png)
+
