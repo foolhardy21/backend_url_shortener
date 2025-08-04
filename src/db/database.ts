@@ -1,22 +1,94 @@
-import sqlite3 from "sqlite3"
+import path from "path"
+import { DataTypes, FindOptions, Model, Sequelize, WhereOptions } from "sequelize"
+import { Url } from "../helpers/types"
 
-sqlite3.verbose()
+class Database {
+    #sequelize
+    #Url
 
-const db = new sqlite3.Database("./url_shortener_db.sqlite", (err) => {
-    if (err) {
-        console.error("Error while creating database", err)
-    } else {
-        console.log("Database created successfully")
+    constructor() {
+        this.#sequelize = new Sequelize({
+            dialect: "sqlite",
+            storage: path.resolve(__dirname, "../../url_shortener_db.sqlite"),
+        })
+        this.#Url = this.#sequelize.define(
+            "Url",
+            {
+                id: {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true,
+                },
+                originalUrl: {
+                    type: DataTypes.TEXT,
+                    allowNull: false,
+                },
+                shortUrl: {
+                    type: DataTypes.TEXT,
+                    unique: true,
+                },
+            },
+            {
+                tableName: "url_map",
+                underscored: true,
+                timestamps: true,
+                updatedAt: false,
+            }
+        )
     }
-})
 
-db.run(`
-    CREATE TABLE IF NOT EXISTS url_map (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        original_url TEXT NOT NULL,
-        short_url TEXT UNIQUE,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-`)
+    async initialize() {
+        try {
+            await this.#sequelize.authenticate()
+            console.log("Connected to the database")
+            try {
+                await this.#Url.sync()
+                console.log("Table sync successful")
+            } catch (err) {
+                console.log("Error syncing the table", err)
+            }
+        } catch (err) {
+            console.log("Error connecting to the database", err)
+        }
+    }
 
-export default db
+    async create({ originalUrl, shortUrl }: { originalUrl: string, shortUrl: string }): Promise<Url> {
+        try {
+            const instance = await this.#Url.create({ originalUrl, shortUrl })
+            return instance.toJSON() as Url
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async get({ where, options }: { where: WhereOptions, options: FindOptions }): Promise<Url[]> {
+        try {
+            const urlModels: Model[] = await this.#Url.findAll({
+                ...(where && { where }),
+                ...(options && options),
+            })
+            const urls = urlModels.map((url: Model) => url.toJSON() as Url)
+            return urls
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async delete({ where }: { where: WhereOptions }) {
+        try {
+            await this.#Url.destroy({
+                ...(where && { where }),
+            })
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+}
+
+const database = new Database()
+database.initialize()
+
+export default database
