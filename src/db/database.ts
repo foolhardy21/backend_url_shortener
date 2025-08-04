@@ -76,11 +76,12 @@ class Database {
         }
     }
 
-    async delete({ where }: { where: WhereOptions }) {
+    async delete({ where }: { where: WhereOptions }): Promise<number> {
         try {
-            await this.#Url.destroy({
+            const deletedCount = await this.#Url.destroy({
                 ...(where && { where }),
             })
+            return deletedCount
         } catch (err) {
             console.log(err)
             throw err as Error

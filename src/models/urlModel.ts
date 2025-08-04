@@ -55,13 +55,29 @@ const getByShortUrl = async ({ shortUrl }: { shortUrl: string }): Promise<Url[]>
     }
 }
 
-const deleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Promise<void> => {
+const getByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Promise<Url[]> => {
     try {
-        await db.delete({
+        const dbRes = await db.get({
+            where: {
+                originalUrl
+            },
+            options: {},
+        })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
+const deleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Promise<number> => {
+    try {
+        const dbRes = await db.delete({
             where: {
                 originalUrl
             }
         })
+        return dbRes
     } catch (err) {
         console.log(err)
         throw err as Error
@@ -74,4 +90,5 @@ export default {
     getByShortUrl,
     deleteByOriginalUrl,
     getLastUrlId,
+    getByOriginalUrl,
 }

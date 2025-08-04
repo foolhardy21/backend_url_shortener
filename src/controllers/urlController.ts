@@ -7,12 +7,10 @@ const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl } = req.body
     try {
         const lastIdDbRes = await urlModel.getLastUrlId()
-        if (lastIdDbRes) {
-            const shortUrl = generateShortCode((lastIdDbRes as number) + 1)
-            const createDbRes = await urlModel.create({ originalUrl, shortUrl })
-            if (createDbRes) {
-                return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
-            }
+        const shortUrl = generateShortCode((lastIdDbRes as number) + 1)
+        const createDbRes = await urlModel.create({ originalUrl, shortUrl })
+        if (createDbRes) {
+            return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
         }
     } catch (err) {
         console.log(err)
@@ -22,7 +20,6 @@ const createShortUrl = async (req: Request, res: Response) => {
 
 const getOriginalUrl = async (req: Request, res: Response) => {
     const code = req.query.code as string
-    if (!code) return res.status(400).json({ success: false, message: "Missing required query parameter: code" })
     try {
         const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
         if (shortUrlRes) {
@@ -34,7 +31,19 @@ const getOriginalUrl = async (req: Request, res: Response) => {
     }
 }
 
+const deleteByOriginalUrl = async (req: Request, res: Response) => {
+    try {
+        const originalUrl = req.query.originalUrl as string
+        await urlModel.deleteByOriginalUrl({ originalUrl })
+        return res.status(200).json({ success: true, message: "URL deleted successfully." })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ status: false, message: err })
+    }
+}
+
 export default {
     createShortUrl,
     getOriginalUrl,
+    deleteByOriginalUrl,
 }
