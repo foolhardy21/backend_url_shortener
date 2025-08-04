@@ -1,23 +1,71 @@
 import db from "../db/database"
+import { Url } from "../helpers/types"
 
-const getTotalUrlsCount = (callback: (err: Error | null, queryObj: { count: number }) => void): void => {
-    db.get("SELECT COUNT(*) AS count FROM url_map", [], callback)
+const getTotalUrlsCount = async (): Promise<number> => {
+    try {
+        const dbRes = await db.get({
+            where: {},
+            options: {},
+        })
+        return dbRes.length
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
 }
 
-const getLastUrlId = (callback: (err: Error | null, queryObj: { id: number }) => void) => {
-    db.get("SELECT id FROM url_map ORDER BY id DESC LIMIT 1", [], callback)
+const getLastUrlId = async (): Promise<number> => {
+    try {
+        const dbRes = await db.get({
+            where: {},
+            options: {
+                order: [["id", "DESC"]],
+                limit: 1,
+            }
+        })
+        return dbRes[0].id as number
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
 }
 
-const create = (urlObj: { originalUrl: string, shortUrl: string }, callback: (err: Error | null) => void) => {
-    db.run("INSERT INTO url_map (original_url, short_url) VALUES (?, ?)", [urlObj.originalUrl, urlObj.shortUrl], callback)
+const create = async (urlObj: { originalUrl: string, shortUrl: string }): Promise<Url> => {
+    try {
+        const dbRes = await db.create({ originalUrl: urlObj.originalUrl, shortUrl: urlObj.shortUrl })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
 }
 
-const getByShortUrl = (shortUrl: string, callback: (err: Error | null, queryRes: { id: string, original_url: string, short_url: string, created_at: string }) => void) => {
-    db.get("SELECT * FROM url_map WHERE short_url = ?", [shortUrl], callback)
+const getByShortUrl = async ({ shortUrl }: { shortUrl: string }): Promise<Url[]> => {
+    try {
+        const dbRes = await db.get({
+            where: {
+                shortUrl
+            },
+            options: {},
+        })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
 }
 
-const deleteByOriginalUrl = (originalUrl: string, callback: (err: Error | null) => void) => {
-    db.run("DELETE FROM url_map WHERE original_url = ?", [originalUrl], callback)
+const deleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Promise<void> => {
+    try {
+        await db.delete({
+            where: {
+                originalUrl
+            }
+        })
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
 }
 
 export default {

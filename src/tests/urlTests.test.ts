@@ -6,7 +6,7 @@ describe("URL Integration Testing", () => {
     const originalUrl = "https://example.com"
 
     beforeAll(() => {
-        urlModel.deleteByOriginalUrl(originalUrl, () => { })
+        urlModel.deleteByOriginalUrl({ originalUrl })
     })
 
     it("should create the short url and redirect to it's original url", async () => {

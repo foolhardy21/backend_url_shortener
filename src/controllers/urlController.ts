@@ -1,35 +1,37 @@
 import { Request, Response } from "express"
 import urlModel from "../models/urlModel"
 import { generateShortCode } from "../helpers/utils"
+import { Url } from "../helpers/types"
 
-const createShortUrl = (req: Request, res: Response) => {
+const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl } = req.body
-    urlModel.getLastUrlId((err, queryObj) => {
-        if (err) {
-            console.error("Error while fetching total counts", err)
-        } else {
-            const shortUrl = generateShortCode(queryObj.id + 1)
-            urlModel.create({ originalUrl, shortUrl }, (err) => {
-                if (err) {
-                    return res.status(500).json({ success: false, message: err })
-                } else {
-                    return res.status(200).json({ success: true, shortUrl })
-                }
-            })
+    try {
+        const lastIdDbRes = await urlModel.getLastUrlId()
+        if (lastIdDbRes) {
+            const shortUrl = generateShortCode((lastIdDbRes as number) + 1)
+            const createDbRes = await urlModel.create({ originalUrl, shortUrl })
+            if (createDbRes) {
+                return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
+            }
         }
-    })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
+    }
 }
 
-const getOriginalUrl = (req: Request, res: Response) => {
+const getOriginalUrl = async (req: Request, res: Response) => {
     const code = req.query.code as string
     if (!code) return res.status(400).json({ success: false, message: "Missing required query parameter: code" })
-    urlModel.getByShortUrl(code, (err, queryRes) => {
-        if (err) {
-            return res.status(500).json({ success: false, message: err })
-        } else {
-            return res.status(200).json({ success: true, originalUrl: queryRes.original_url, createdAt: queryRes.created_at })
+    try {
+        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
+        if (shortUrlRes) {
+            return res.status(200).json({ success: true, originalUrl: shortUrlRes[0].originalUrl, createdAt: shortUrlRes[0].createdAt })
         }
-    })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
+    }
 }
 
 export default {
