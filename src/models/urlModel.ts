@@ -84,6 +84,22 @@ const deleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Pr
     }
 }
 
+const getLatestNUrls = async (limit: number): Promise<Url[]> => {
+    try {
+        const dbRes = await db.get({
+            where: {},
+            options: {
+                order: [["created_at", "DESC"]],
+                limit,
+            }
+        })
+        return dbRes
+    }catch(err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
 export default {
     getTotalUrlsCount,
     create,
@@ -91,4 +107,5 @@ export default {
     deleteByOriginalUrl,
     getLastUrlId,
     getByOriginalUrl,
+    getLatestNUrls,
 }
