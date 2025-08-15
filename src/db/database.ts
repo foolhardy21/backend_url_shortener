@@ -1,5 +1,5 @@
 import path from "path"
-import { DataTypes, FindOptions, Model, Sequelize, WhereOptions } from "sequelize"
+import { DataTypes, FindOptions, Model, Sequelize, UpdateOptions, WhereOptions } from "sequelize"
 import { Url } from "../helpers/types"
 
 class Database {
@@ -27,6 +27,14 @@ class Database {
                     type: DataTypes.TEXT,
                     unique: true,
                 },
+                visitCount: {
+                    type: DataTypes.INTEGER,
+                    defaultValue: 0,
+                },
+                accessedAt: {
+                    type: DataTypes.DATE,
+                    allowNull: true,
+                }
             },
             {
                 tableName: "url_map",
@@ -41,12 +49,6 @@ class Database {
         try {
             await this.#sequelize.authenticate()
             console.log("Connected to the database")
-            try {
-                await this.#Url.sync()
-                console.log("Table sync successful")
-            } catch (err) {
-                console.log("Error syncing the table", err)
-            }
         } catch (err) {
             console.log("Error connecting to the database", err)
         }
@@ -56,6 +58,16 @@ class Database {
         try {
             const instance = await this.#Url.create({ originalUrl, shortUrl })
             return instance.toJSON() as Url
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async update(columns: Record<string, unknown>, options: { where: WhereOptions } & Partial<UpdateOptions>): Promise<number[]> {
+        try {
+            const res = await this.#Url.update(columns, options)
+            return res
         } catch (err) {
             console.log(err)
             throw err as Error

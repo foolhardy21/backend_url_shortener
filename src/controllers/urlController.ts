@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import urlModel from "../models/urlModel"
 import { generateShortCode } from "../helpers/utils"
 import { Url } from "../helpers/types"
@@ -6,8 +6,8 @@ import { Url } from "../helpers/types"
 const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl } = req.body
     try {
-        const lastIdDbRes = await urlModel.getLastUrlId()
-        const shortUrl = generateShortCode((lastIdDbRes as number) + 1)
+        const lastIdDbRes = await urlModel.getLatestNUrls(1)
+        const shortUrl = generateShortCode((lastIdDbRes[0].id as number) + 1)
         const createDbRes = await urlModel.create({ originalUrl, shortUrl })
         if (createDbRes) {
             return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
@@ -42,8 +42,25 @@ const deleteByOriginalUrl = async (req: Request, res: Response) => {
     }
 }
 
+const updateUrlMetaData = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const shortUrl = req.query.code as string
+        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
+        await urlModel.updateUrlMetaData({
+            visitCount: shortUrlRes[0].visitCount + 1,
+            accessedAt: new Date(),
+            shortUrl
+        })
+        next()
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
+    }
+}
+
 export default {
     createShortUrl,
     getOriginalUrl,
     deleteByOriginalUrl,
+    updateUrlMetaData,
 }

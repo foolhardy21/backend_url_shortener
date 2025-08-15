@@ -3,5 +3,7 @@ export type Url = {
     originalUrl: string
     shortUrl: string
     createdAt: string
+    visitCount: number
+    accessedAt: Date
 }
 

@@ -14,22 +14,6 @@ const getTotalUrlsCount = async (): Promise<number> => {
     }
 }
 
-const getLastUrlId = async (): Promise<number> => {
-    try {
-        const dbRes = await db.get({
-            where: {},
-            options: {
-                order: [["id", "DESC"]],
-                limit: 1,
-            }
-        })
-        return dbRes[0].id as number
-    } catch (err) {
-        console.log(err)
-        throw err as Error
-    }
-}
-
 const create = async (urlObj: { originalUrl: string, shortUrl: string }): Promise<Url> => {
     try {
         const dbRes = await db.create({ originalUrl: urlObj.originalUrl, shortUrl: urlObj.shortUrl })
@@ -94,7 +78,33 @@ const getLatestNUrls = async (limit: number): Promise<Url[]> => {
             }
         })
         return dbRes
-    }catch(err) {
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
+const updateUrlMetaData = async ({ visitCount, accessedAt, shortUrl }: { visitCount: number, accessedAt: Date, shortUrl: string }): Promise<number[]> => {
+    try {
+        const dbRes = await db.update({ visitCount, accessedAt }, { where: { shortUrl } })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
+const getPopularNUrls = async (limit: number) => {
+    try {
+        const dbRes = await db.get({
+            where: {},
+            options: {
+                order: [["visit_count", "DESC"], ["accessed_at", "DESC"]],
+                limit,
+            }
+        })
+        return dbRes
+    } catch (err) {
         console.log(err)
         throw err as Error
     }
@@ -105,7 +115,8 @@ export default {
     create,
     getByShortUrl,
     deleteByOriginalUrl,
-    getLastUrlId,
     getByOriginalUrl,
     getLatestNUrls,
+    updateUrlMetaData,
+    getPopularNUrls,
 }
