@@ -1,3 +1,4 @@
+import { Sequelize } from "sequelize"
 import db from "../db/database"
 import { Url } from "../helpers/types"
 
@@ -110,6 +111,24 @@ const getPopularNUrls = async (limit: number) => {
     }
 }
 
+const getMostShortenedNUrls = async (limit: number) => {
+    try {
+        const dbRes = await db.get({
+            where: {},
+            options: {
+                attributes: ["original_url", [Sequelize.fn("COUNT", Sequelize.col("original_url")), "shortened_url"]],
+                group: "original_url",
+                order: [["shortened_url", "DESC"]],
+                limit,
+            }
+        })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
 export default {
     getTotalUrlsCount,
     create,
@@ -119,4 +138,5 @@ export default {
     getLatestNUrls,
     updateUrlMetaData,
     getPopularNUrls,
+    getMostShortenedNUrls,
 }

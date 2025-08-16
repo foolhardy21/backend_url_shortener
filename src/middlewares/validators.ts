@@ -7,10 +7,6 @@ const validateShortenPayload = async (req: Request, res: Response, next: NextFun
         if (!originalUrl) {
             return res.status(400).json({ success: false, message: "Invalid or missing 'originalUrl' in request body." })
         }
-        const originalUrlRes = await urlModel.getByOriginalUrl({ originalUrl })
-        if (originalUrlRes.length) {
-            return res.status(400).json({ success: false, shortUrl: originalUrlRes[0].shortUrl, message: "This URL has already been shortened." })
-        }
         next()
     } catch (err) {
         console.log(err)
