@@ -15,9 +15,9 @@ const getTotalUrlsCount = async (): Promise<number> => {
     }
 }
 
-const create = async (urlObj: { originalUrl: string, shortUrl: string }): Promise<Url> => {
+const create = async (urlObj: { originalUrl: string, shortUrl: string, userId: number }): Promise<Url> => {
     try {
-        const dbRes = await db.create({ originalUrl: urlObj.originalUrl, shortUrl: urlObj.shortUrl })
+        const dbRes = await db.create({ originalUrl: urlObj.originalUrl, shortUrl: urlObj.shortUrl, userId: urlObj.userId })
         return dbRes
     } catch (err) {
         console.log(err)
@@ -129,6 +129,24 @@ const getMostShortenedNUrls = async (limit: number) => {
     }
 }
 
+const softDeleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Promise<number[]> => {
+    try {
+        const dbRes = await db.update(
+            {
+                deletedAt: new Date()
+            },
+            {
+                where: {
+                    originalUrl
+                }
+            })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
 export default {
     getTotalUrlsCount,
     create,
@@ -139,4 +157,5 @@ export default {
     updateUrlMetaData,
     getPopularNUrls,
     getMostShortenedNUrls,
+    softDeleteByOriginalUrl,
 }

@@ -4,6 +4,7 @@
 - [How to Run Locally](#how-to-run-locally)
 - [How to Run Test Cases Locally](#how-to-run-test-cases-locally)
 - [Load Testing](#load-testing)
+- [Schema Design](#schema-design)
 
 ### Tech Stack
 - Node.js
@@ -155,3 +156,8 @@ Test files are located in the `src/tests/` directory and use Jest with Supertest
 
 ![](./assets/loadingTesting/redirect-latency.png)
 
+---
+
+### Schema Design
+
+Yet to be added...

@@ -5,10 +5,11 @@ import { Url } from "../helpers/types"
 
 const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl } = req.body
+    const userId = (req as any).userId as number
     try {
         const lastIdDbRes = await urlModel.getLatestNUrls(1)
         const shortUrl = generateShortCode((lastIdDbRes[0].id as number) + 1)
-        const createDbRes = await urlModel.create({ originalUrl, shortUrl })
+        const createDbRes = await urlModel.create({ originalUrl, shortUrl, userId })
         if (createDbRes) {
             return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
         }
@@ -34,7 +35,7 @@ const getOriginalUrl = async (req: Request, res: Response) => {
 const deleteByOriginalUrl = async (req: Request, res: Response) => {
     try {
         const originalUrl = req.query.originalUrl as string
-        await urlModel.deleteByOriginalUrl({ originalUrl })
+        await urlModel.softDeleteByOriginalUrl({ originalUrl })
         return res.status(200).json({ success: true, message: "URL deleted successfully." })
     } catch (err) {
         console.log(err)

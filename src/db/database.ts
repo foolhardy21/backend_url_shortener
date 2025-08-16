@@ -1,10 +1,11 @@
 import path from "path"
 import { DataTypes, FindOptions, Model, Sequelize, UpdateOptions, WhereOptions } from "sequelize"
-import { Url } from "../helpers/types"
+import { Url, User } from "../helpers/types"
 
 class Database {
     #sequelize
     #Url
+    #User
 
     constructor() {
         this.#sequelize = new Sequelize({
@@ -34,10 +35,49 @@ class Database {
                 accessedAt: {
                     type: DataTypes.DATE,
                     allowNull: true,
+                },
+                userId: {
+                    type: DataTypes.INTEGER,
+                    references: {
+                        model: "users",
+                        key: "id",
+                    }
+                },
+                deletedAt: {
+                    type: DataTypes.DATE,
                 }
             },
             {
                 tableName: "url_map",
+                underscored: true,
+                timestamps: true,
+                updatedAt: false,
+            }
+        )
+        this.#User = this.#sequelize.define(
+            "User",
+            {
+                id: {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true,
+                },
+                email: {
+                    type: DataTypes.TEXT,
+                    unique: true,
+                    allowNull: false,
+                },
+                name: {
+                    type: DataTypes.TEXT,
+                },
+                apiKey: {
+                    type: DataTypes.UUIDV4,
+                    unique: true,
+                    allowNull: false,
+                },
+            },
+            {
+                tableName: "users",
                 underscored: true,
                 timestamps: true,
                 updatedAt: false,
@@ -54,9 +94,9 @@ class Database {
         }
     }
 
-    async create({ originalUrl, shortUrl }: { originalUrl: string, shortUrl: string }): Promise<Url> {
+    async create({ originalUrl, shortUrl, userId }: { originalUrl: string, shortUrl: string, userId: number }): Promise<Url> {
         try {
-            const instance = await this.#Url.create({ originalUrl, shortUrl })
+            const instance = await this.#Url.create({ originalUrl, shortUrl, userId })
             return instance.toJSON() as Url
         } catch (err) {
             console.log(err)
@@ -94,6 +134,19 @@ class Database {
                 ...(where && { where }),
             })
             return deletedCount
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async getUsers({ where, options }: { where: WhereOptions, options: FindOptions }): Promise<User[]> {
+        try {
+            const userModels = await this.#User.findAll({
+                ...(where && { where }),
+                ...(options && options),
+            })
+            return userModels.map(userModel => userModel.toJSON() as User)
         } catch (err) {
             console.log(err)
             throw err as Error
