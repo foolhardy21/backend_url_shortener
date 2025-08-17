@@ -91,4 +91,22 @@ describe("URL Integration Testing", () => {
         expect(redirectRes.status).toBe(403)
         expect(redirectRes.body.success).toBeFalsy()
     })
+
+    it("should not accept duplicate custom code", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body, customCode: "1" })
+        expect(shortenRes.status).toBe(409)
+        expect(shortenRes.body.success).toBeFalsy()
+    })
+
+    it("should accept unique custom code", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body, customCode: "hocuspocus" })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+    })
 })

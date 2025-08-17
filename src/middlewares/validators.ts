@@ -4,7 +4,7 @@ import userModel from "../models/userModel";
 
 const validateShortenPayload = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { originalUrl } = req.body
+        const { originalUrl, customCode } = req.body
         const requestApiKey = req.headers["x-api-key"]
         if (!originalUrl) {
             return res.status(400).json({ success: false, message: "Invalid or missing 'originalUrl' in request body." })
@@ -15,6 +15,10 @@ const validateShortenPayload = async (req: Request, res: Response, next: NextFun
         const userRes = await userModel.getUserByApiKey(requestApiKey as string)
         if (userRes.length === 0) {
             return res.status(401).json({ success: false, message: "Invalid API key." })
+        }
+        if (customCode) {
+            const urlRes = await urlModel.getByShortUrl({ shortUrl: customCode })
+            if (urlRes.length > 0) return res.status(409).json({ success: false, message: "This short URL already exists. Please create a new one." })
         }
         (req as any).userId = userRes[0].id
         next()
