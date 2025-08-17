@@ -4,12 +4,17 @@ import { generateShortCode } from "../helpers/utils"
 import { Url } from "../helpers/types"
 
 const createShortUrl = async (req: Request, res: Response) => {
-    const { originalUrl } = req.body
+    const { originalUrl, expiryDate } = req.body
     const userId = (req as any).userId as number
     try {
         const lastIdDbRes = await urlModel.getLatestNUrls(1)
         const shortUrl = generateShortCode((lastIdDbRes[0].id as number) + 1)
-        const createDbRes = await urlModel.create({ originalUrl, shortUrl, userId })
+        const createDbRes = await urlModel.create({
+            originalUrl,
+            shortUrl,
+            userId,
+            ...(expiryDate && { expiryDate })
+        })
         if (createDbRes) {
             return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
         }

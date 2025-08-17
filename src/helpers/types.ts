@@ -7,6 +7,7 @@ export type Url = {
     accessedAt: Date
     userId: number
     deletedAt: Date
+    expiryDate?: string
 }
 
 export type User = {

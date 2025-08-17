@@ -30,6 +30,12 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
         if (!shortUrl) return res.status(400).json({ success: false, message: "Missing or empty required query parameter 'code'." })
         const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
         if (shortUrlRes[0].deletedAt) return res.status(400).json({ success: false, message: "No URL found for the provided code." })
+        if (shortUrlRes[0].expiryDate) {
+            const expiryDate = new Date(shortUrlRes[0].expiryDate as string)
+            if (expiryDate < new Date()) {
+                return res.status(403).json({ success: false, message: "This short URL has expired. Please create a new one ot continue." })
+            }
+        }
         next()
     } catch (err) {
         console.log(err)

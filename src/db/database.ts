@@ -45,6 +45,10 @@ class Database {
                 },
                 deletedAt: {
                     type: DataTypes.DATE,
+                },
+                expiryDate: {
+                    type: DataTypes.DATE,
+                    allowNull: true,
                 }
             },
             {
@@ -94,9 +98,14 @@ class Database {
         }
     }
 
-    async create({ originalUrl, shortUrl, userId }: { originalUrl: string, shortUrl: string, userId: number }): Promise<Url> {
+    async create({ originalUrl, shortUrl, userId, expiryDate }: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date }): Promise<Url> {
         try {
-            const instance = await this.#Url.create({ originalUrl, shortUrl, userId })
+            const instance = await this.#Url.create({
+                originalUrl,
+                shortUrl,
+                userId,
+                ...(expiryDate && { expiryDate })
+            })
             return instance.toJSON() as Url
         } catch (err) {
             console.log(err)

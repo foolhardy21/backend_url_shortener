@@ -15,9 +15,14 @@ const getTotalUrlsCount = async (): Promise<number> => {
     }
 }
 
-const create = async (urlObj: { originalUrl: string, shortUrl: string, userId: number }): Promise<Url> => {
+const create = async (urlObj: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date }): Promise<Url> => {
     try {
-        const dbRes = await db.create({ originalUrl: urlObj.originalUrl, shortUrl: urlObj.shortUrl, userId: urlObj.userId })
+        const dbRes = await db.create({
+            originalUrl: urlObj.originalUrl,
+            shortUrl: urlObj.shortUrl,
+            userId: urlObj.userId,
+            ...(urlObj.expiryDate && { expiryDate: urlObj.expiryDate })
+        })
         return dbRes
     } catch (err) {
         console.log(err)

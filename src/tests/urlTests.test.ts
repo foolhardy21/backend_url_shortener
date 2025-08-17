@@ -76,6 +76,19 @@ describe("URL Integration Testing", () => {
             .delete(`/api/url?originalUrl=${originalUrl}`)
         expect(deleteRes.status).toBe(401)
         expect(deleteRes.body.success).toBeFalsy()
+    })
 
+    it("should throw error for expired urls", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body, expiryDate: new Date() })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        const redirectRes = await supertest(app)
+            .get(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirectRes.status).toBe(403)
+        expect(redirectRes.body.success).toBeFalsy()
     })
 })
