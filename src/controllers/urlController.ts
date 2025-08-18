@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import urlModel from "../models/urlModel"
-import { generateShortCode } from "../helpers/utils"
-import { Url } from "../helpers/types"
+import { generateShortCode, parseBulkShortenUrlsFile } from "../helpers/utils"
+import { BulkShortenUrlObj, Url } from "../helpers/types"
 
 const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl, expiryDate, customCode } = req.body
@@ -20,8 +20,8 @@ const createShortUrl = async (req: Request, res: Response) => {
             userId,
             ...(expiryDate && { expiryDate })
         })
-        if (createDbRes) {
-            return res.status(200).json({ success: true, shortUrl: (createDbRes as Url).shortUrl })
+        if (createDbRes.success) {
+            return res.status(200).json({ success: true, shortUrl: (createDbRes.data as Url).shortUrl })
         }
     } catch (err) {
         console.log(err)
@@ -69,9 +69,34 @@ const updateUrlMetaData = async (req: Request, res: Response, next: NextFunction
     }
 }
 
+const createBulkShortUrls = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId as number
+        let urls: BulkShortenUrlObj[] = await parseBulkShortenUrlsFile(req.file as Express.Multer.File)
+        const lastIdDbRes = await urlModel.getLatestNUrls(1)
+        let latestIdCount = (lastIdDbRes[0].id as number)
+        for (const url of urls) {
+            if (!url.customCode) {
+                url.customCode = generateShortCode(++latestIdCount)
+            }
+        }
+        const resArr = await Promise.all(urls.map(url => urlModel.create({
+            originalUrl: url.originalUrl,
+            shortUrl: url.customCode,
+            userId,
+            ...(url.expiryDate && { expiryDate: url.expiryDate })
+        })))
+        return res.status(200).json({ success: true, message: resArr.filter(res => !res.success) })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
+    }
+}
+
 export default {
     createShortUrl,
     getOriginalUrl,
     deleteByOriginalUrl,
     updateUrlMetaData,
+    createBulkShortUrls,
 }

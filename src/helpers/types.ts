@@ -18,3 +18,8 @@ export type User = {
     apiKey: string
 }
 
+export type BulkShortenUrlObj = {
+    originalUrl: string
+    expiryDate: Date
+    customCode: string
+}

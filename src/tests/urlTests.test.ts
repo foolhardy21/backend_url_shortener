@@ -109,4 +109,13 @@ describe("URL Integration Testing", () => {
         expect(shortenRes.status).toBe(200)
         expect(shortenRes.body.success).toBeTruthy()
     })
+
+    it("should validate bulk shorten csv file", async () => {
+        const response = await supertest(app)
+            .post("/api/url/bulk-shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .attach("urlsCsv", "src/tests/fixtures/bulk_shorten_urls.csv")
+        expect(response.status).toBe(200)
+        expect(response.body.success).toBeTruthy()
+    })
 })
