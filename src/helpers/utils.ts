@@ -30,3 +30,8 @@ export const parseBulkShortenUrlsFile = (file: Express.Multer.File): Promise<any
             })
     })
 }
+
+export const USER_TYPES = {
+    HOBBY: "hobby",
+    ENTERPRISE: "enterprise",
+}

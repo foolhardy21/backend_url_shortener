@@ -10,12 +10,18 @@ export type Url = {
     expiryDate?: string
 }
 
+enum UserTierType {
+    HOBBY = "hobby",
+    ENTERPRISE = "enterprise"
+}
+
 export type User = {
     id: number
     name: string
     email: string
     createdAt: string
     apiKey: string
+    tier: UserTierType
 }
 
 export type BulkShortenUrlObj = {

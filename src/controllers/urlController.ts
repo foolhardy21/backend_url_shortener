@@ -93,10 +93,23 @@ const createBulkShortUrls = async (req: Request, res: Response) => {
     }
 }
 
+const updateUrlExpiry = async (req: Request, res: Response) => {
+    try {
+        const code = req.query.code as string
+        const expiryDate = req.body.expiryDate as Date
+        await urlModel.updateUrlExpiry({ expiryDate, shortUrl: code })
+        return res.status(200).json({ success: true, message: "URL expiry updated successfully" })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
+    }
+}
+
 export default {
     createShortUrl,
     getOriginalUrl,
     deleteByOriginalUrl,
     updateUrlMetaData,
     createBulkShortUrls,
+    updateUrlExpiry,
 }

@@ -1,6 +1,7 @@
 import path from "path"
 import { DataTypes, FindOptions, Model, Sequelize, UpdateOptions, WhereOptions } from "sequelize"
 import { Url, User } from "../helpers/types"
+import { USER_TYPES } from "../helpers/utils"
 
 class Database {
     #sequelize
@@ -79,6 +80,11 @@ class Database {
                     unique: true,
                     allowNull: false,
                 },
+                tier: {
+                    type: DataTypes.ENUM(USER_TYPES.HOBBY, USER_TYPES.ENTERPRISE),
+                    defaultValue: USER_TYPES.HOBBY,
+                    allowNull: false,
+                }
             },
             {
                 tableName: "users",

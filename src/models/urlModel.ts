@@ -152,6 +152,20 @@ const softDeleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string })
     }
 }
 
+const updateUrlExpiry = async ({ expiryDate, shortUrl }: { expiryDate: Date, shortUrl: string }) => {
+    try {
+        const dbRes = await db.update(
+            { expiryDate },
+            {
+                where: { shortUrl }
+            })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
 export default {
     getTotalUrlsCount,
     create,
@@ -163,4 +177,5 @@ export default {
     getPopularNUrls,
     getMostShortenedNUrls,
     softDeleteByOriginalUrl,
+    updateUrlExpiry,
 }

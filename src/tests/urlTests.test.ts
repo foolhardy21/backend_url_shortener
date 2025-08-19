@@ -101,13 +101,22 @@ describe("URL Integration Testing", () => {
         expect(shortenRes.body.success).toBeFalsy()
     })
 
-    it("should accept unique custom code", async () => {
+    it("should not accept non unique custom code", async () => {
         const shortenRes = await supertest(app)
             .post("/api/url/shorten")
             .set("x-api-key", process.env.TEST_API_KEY as string)
             .send({ ...body, customCode: "hocuspocus" })
-        expect(shortenRes.status).toBe(200)
-        expect(shortenRes.body.success).toBeTruthy()
+        expect(shortenRes.status).toBe(409)
+        expect(shortenRes.body.success).toBeFalsy()
+    })
+
+    it("should validate user's tier for bulk shorten", async () => {
+        const response = await supertest(app)
+            .post("/api/url/bulk-shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .attach("urlsCsv", "src/tests/fixtures/bulk_shorten_urls.csv")
+        expect(response.status).toBe(401)
+        expect(response.body.success).toBeFalsy()
     })
 
     it("should validate bulk shorten csv file", async () => {
@@ -115,6 +124,22 @@ describe("URL Integration Testing", () => {
             .post("/api/url/bulk-shorten")
             .set("x-api-key", process.env.TEST_API_KEY as string)
             .attach("urlsCsv", "src/tests/fixtures/bulk_shorten_urls.csv")
+        expect(response.status).toBe(401)
+        expect(response.body.success).toBeFalsy()
+    })
+
+    it("should edit url's expiry date", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send(body)
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        const response = await supertest(app)
+            .patch(`/api/url/update?code=${shortenRes.body.shortUrl}`)
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body, expiryDate: new Date() })
         expect(response.status).toBe(200)
         expect(response.body.success).toBeTruthy()
     })

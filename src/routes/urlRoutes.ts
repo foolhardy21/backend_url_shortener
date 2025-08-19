@@ -10,5 +10,6 @@ router.post("/shorten", validators.validateShortenPayload, urlController.createS
 router.get("/redirect", validators.validateRedirectQuery, urlController.updateUrlMetaData, urlController.getOriginalUrl)
 router.delete("/", validators.validateDeleteParams, urlController.deleteByOriginalUrl)
 router.post("/bulk-shorten", fileUpload.single("urlsCsv"), validators.validateBulkShortenPayload, urlController.createBulkShortUrls)
+router.patch("/update", validators.validateRedirectQuery, urlController.updateUrlExpiry)
 
 export default router
