@@ -4,6 +4,7 @@
 - [How to Run Locally](#how-to-run-locally)
 - [How to Run Test Cases Locally](#how-to-run-test-cases-locally)
 - [Load Testing](#load-testing)
+- [Schema Design](#schema-design)
 
 ### Tech Stack
 - Node.js
@@ -11,6 +12,7 @@
 - TypeScript
 - SQLite
 - ESLint
+- Jest and Supertest
 
 ### How to Run Locally
 1. **Clone the repository:**
@@ -37,6 +39,7 @@
 6. **API Endpoints:**
    - `POST /shorten` — Create a short URL
    - `GET /redirect?code=...` — Redirect to the original URL
+   - `DELETE ?originalUrl=...` — Delete by original URL
 
 ---
 
@@ -55,7 +58,7 @@ Test files are located in the `src/tests/` directory and use Jest with Supertest
 
 ---
 
-### Load Testing
+### Load Testing Outputs
 
 #### 10 concurrent users
 
@@ -153,3 +156,8 @@ Test files are located in the `src/tests/` directory and use Jest with Supertest
 
 ![](./assets/loadingTesting/redirect-latency.png)
 
+---
+
+### Schema Design
+
+Yet to be added...

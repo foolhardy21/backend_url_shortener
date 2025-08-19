@@ -1,10 +1,12 @@
 import path from "path"
-import { DataTypes, FindOptions, Model, Sequelize, WhereOptions } from "sequelize"
-import { Url } from "../helpers/types"
+import { DataTypes, FindOptions, Model, Sequelize, UpdateOptions, WhereOptions } from "sequelize"
+import { Url, User } from "../helpers/types"
+import { USER_TYPES } from "../helpers/utils"
 
 class Database {
     #sequelize
     #Url
+    #User
 
     constructor() {
         this.#sequelize = new Sequelize({
@@ -27,9 +29,70 @@ class Database {
                     type: DataTypes.TEXT,
                     unique: true,
                 },
+                visitCount: {
+                    type: DataTypes.INTEGER,
+                    defaultValue: 0,
+                },
+                accessedAt: {
+                    type: DataTypes.DATE,
+                    allowNull: true,
+                },
+                userId: {
+                    type: DataTypes.INTEGER,
+                    references: {
+                        model: "users",
+                        key: "id",
+                    }
+                },
+                deletedAt: {
+                    type: DataTypes.DATE,
+                },
+                expiryDate: {
+                    type: DataTypes.DATE,
+                    allowNull: true,
+                },
+                password: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                    unique: true,
+                }
             },
             {
                 tableName: "url_map",
+                underscored: true,
+                timestamps: true,
+                updatedAt: false,
+            }
+        )
+        this.#User = this.#sequelize.define(
+            "User",
+            {
+                id: {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true,
+                },
+                email: {
+                    type: DataTypes.TEXT,
+                    unique: true,
+                    allowNull: false,
+                },
+                name: {
+                    type: DataTypes.TEXT,
+                },
+                apiKey: {
+                    type: DataTypes.UUIDV4,
+                    unique: true,
+                    allowNull: false,
+                },
+                tier: {
+                    type: DataTypes.ENUM(USER_TYPES.HOBBY, USER_TYPES.ENTERPRISE),
+                    defaultValue: USER_TYPES.HOBBY,
+                    allowNull: false,
+                }
+            },
+            {
+                tableName: "users",
                 underscored: true,
                 timestamps: true,
                 updatedAt: false,
@@ -41,21 +104,31 @@ class Database {
         try {
             await this.#sequelize.authenticate()
             console.log("Connected to the database")
-            try {
-                await this.#Url.sync()
-                console.log("Table sync successful")
-            } catch (err) {
-                console.log("Error syncing the table", err)
-            }
         } catch (err) {
             console.log("Error connecting to the database", err)
         }
     }
 
-    async create({ originalUrl, shortUrl }: { originalUrl: string, shortUrl: string }): Promise<Url> {
+    async create({ originalUrl, shortUrl, userId, expiryDate, password }: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date, password?: string }): Promise<Url> {
         try {
-            const instance = await this.#Url.create({ originalUrl, shortUrl })
+            const instance = await this.#Url.create({
+                originalUrl,
+                shortUrl,
+                userId,
+                ...(expiryDate && { expiryDate }),
+                ...(password && { password }),
+            })
             return instance.toJSON() as Url
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async update(columns: Record<string, unknown>, options: { where: WhereOptions } & Partial<UpdateOptions>): Promise<number[]> {
+        try {
+            const res = await this.#Url.update(columns, options)
+            return res
         } catch (err) {
             console.log(err)
             throw err as Error
@@ -82,6 +155,19 @@ class Database {
                 ...(where && { where }),
             })
             return deletedCount
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async getUsers({ where, options }: { where: WhereOptions, options: FindOptions }): Promise<User[]> {
+        try {
+            const userModels = await this.#User.findAll({
+                ...(where && { where }),
+                ...(options && options),
+            })
+            return userModels.map(userModel => userModel.toJSON() as User)
         } catch (err) {
             console.log(err)
             throw err as Error

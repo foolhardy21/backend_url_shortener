@@ -1,0 +1,14 @@
+{
+  "development": {
+    "dialect": "sqlite",
+    "storage": "./url_shortener_db.sqlite"
+  },
+  "test": {
+    "dialect": "sqlite",
+    "storage": "./url_shortener_db.sqlite"
+  },
+  "production": {
+    "dialect": "sqlite",
+    "storage": "./url_shortener_db.sqlite"
+  }
+}
