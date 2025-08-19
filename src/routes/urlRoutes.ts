@@ -11,5 +11,6 @@ router.patch("/redirect", validators.validateRedirectQuery, urlController.update
 router.delete("/", validators.validateDeleteParams, urlController.deleteByOriginalUrl)
 router.post("/bulk-shorten", fileUpload.single("urlsCsv"), validators.validateBulkShortenPayload, urlController.createBulkShortUrls)
 router.patch("/update", validators.validateUpdateQuery, urlController.updateUrlExpiry)
+router.get("/user/:userId", validators.validateGetUserUrls, urlController.getUserUrls)
 
 export default router

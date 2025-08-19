@@ -14,7 +14,6 @@ const createShortUrl = async (req: Request, res: Response) => {
         } else {
             shortUrl = generateShortCode((lastIdDbRes[0].id as number) + 1)
         }
-        console.log(originalUrl, shortUrl, expiryDate, password)
         const createDbRes = await urlModel.create({
             originalUrl,
             shortUrl,
@@ -117,6 +116,17 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
     }
 }
 
+const getUserUrls = async (req: Request, res: Response) => {
+    try {
+        const userId = Number(req.params.userId)
+        const urlRes = await urlModel.getByUserId({ userId })
+        return res.status(200).json({ success: true, message: "URLs fetched successfully", data: urlRes })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
+    }
+}
+
 export default {
     createShortUrl,
     getOriginalUrl,
@@ -124,4 +134,5 @@ export default {
     updateUrlMetaData,
     createBulkShortUrls,
     updateUrlExpiry,
+    getUserUrls,
 }

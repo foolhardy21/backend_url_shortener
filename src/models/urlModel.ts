@@ -148,6 +148,19 @@ const getByPassword = async ({ password }: { password: string }): Promise<Url[]>
     }
 }
 
+const getByUserId = async ({ userId }: { userId: number }): Promise<Url[]> => {
+    try {
+        const dbRes = await db.get({
+            where: { userId },
+            options: {}
+        })
+        return dbRes
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
 export default {
     getTotalUrlsCount,
     create,
@@ -159,4 +172,5 @@ export default {
     getMostShortenedNUrls,
     updateUrl,
     getByPassword,
+    getByUserId,
 }

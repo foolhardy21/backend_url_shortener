@@ -164,6 +164,12 @@ describe("URL Integration Testing", () => {
             .send({ password: "password3" })
         expect(redirectRes.status).toBe(200)
         expect(redirectRes.body.success).toBeTruthy()
+    })
 
+    it("should fetch all the urls of the user", async () => {
+        const getUserUrlsRes = await supertest(app)
+            .get("/api/url/user/4")
+        expect(getUserUrlsRes.status).toBe(200)
+        expect(getUserUrlsRes.body.success).toBeTruthy()
     })
 })

@@ -129,10 +129,24 @@ const validateUpdateQuery = async (req: Request, res: Response, next: NextFuncti
         throw err as Error
     }
 }
+
+const validateGetUserUrls = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(req.params.userId)
+        const userRes = await userModel.getUserById({ userId: userId })
+        if (userRes.length === 0) return res.status(403).json({ success: false, message: "This user does not exist." })
+        next()
+    } catch (err) {
+        console.log(err)
+        throw err as Error
+    }
+}
+
 export default {
     validateShortenPayload,
     validateRedirectQuery,
     validateDeleteParams,
     validateBulkShortenPayload,
     validateUpdateQuery,
+    validateGetUserUrls
 }
