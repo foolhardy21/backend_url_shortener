@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize"
+import { Sequelize, WhereOptions } from "sequelize"
 import db from "../db/database"
 import { Url } from "../helpers/types"
 
@@ -15,13 +15,14 @@ const getTotalUrlsCount = async (): Promise<number> => {
     }
 }
 
-const create = async (urlObj: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date }): Promise<{ success: boolean, data: Url | Error }> => {
+const create = async (urlObj: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date, password?: string }): Promise<{ success: boolean, data: Url | Error }> => {
     try {
         const dbRes = await db.create({
             originalUrl: urlObj.originalUrl,
             shortUrl: urlObj.shortUrl,
             userId: urlObj.userId,
-            ...(urlObj.expiryDate && { expiryDate: urlObj.expiryDate })
+            ...(urlObj.expiryDate && { expiryDate: urlObj.expiryDate }),
+            ...(urlObj.password && { password: urlObj.password }),
         })
         return { success: true, data: dbRes }
     } catch (err) {
@@ -90,16 +91,6 @@ const getLatestNUrls = async (limit: number): Promise<Url[]> => {
     }
 }
 
-const updateUrlMetaData = async ({ visitCount, accessedAt, shortUrl }: { visitCount: number, accessedAt: Date, shortUrl: string }): Promise<number[]> => {
-    try {
-        const dbRes = await db.update({ visitCount, accessedAt }, { where: { shortUrl } })
-        return dbRes
-    } catch (err) {
-        console.log(err)
-        throw err as Error
-    }
-}
-
 const getPopularNUrls = async (limit: number) => {
     try {
         const dbRes = await db.get({
@@ -134,17 +125,9 @@ const getMostShortenedNUrls = async (limit: number) => {
     }
 }
 
-const softDeleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string }): Promise<number[]> => {
+const updateUrl = async ({ columns, where }: { columns: Record<string, unknown>, where: WhereOptions }): Promise<number[]> => {
     try {
-        const dbRes = await db.update(
-            {
-                deletedAt: new Date()
-            },
-            {
-                where: {
-                    originalUrl
-                }
-            })
+        const dbRes = await db.update(columns, { where })
         return dbRes
     } catch (err) {
         console.log(err)
@@ -152,13 +135,12 @@ const softDeleteByOriginalUrl = async ({ originalUrl }: { originalUrl: string })
     }
 }
 
-const updateUrlExpiry = async ({ expiryDate, shortUrl }: { expiryDate: Date, shortUrl: string }) => {
+const getByPassword = async ({ password }: { password: string }): Promise<Url[]> => {
     try {
-        const dbRes = await db.update(
-            { expiryDate },
-            {
-                where: { shortUrl }
-            })
+        const dbRes = await db.get({
+            where: { password },
+            options: {}
+        })
         return dbRes
     } catch (err) {
         console.log(err)
@@ -173,9 +155,8 @@ export default {
     deleteByOriginalUrl,
     getByOriginalUrl,
     getLatestNUrls,
-    updateUrlMetaData,
     getPopularNUrls,
     getMostShortenedNUrls,
-    softDeleteByOriginalUrl,
-    updateUrlExpiry,
+    updateUrl,
+    getByPassword,
 }

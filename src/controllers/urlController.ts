@@ -4,7 +4,7 @@ import { generateShortCode, parseBulkShortenUrlsFile } from "../helpers/utils"
 import { BulkShortenUrlObj, Url } from "../helpers/types"
 
 const createShortUrl = async (req: Request, res: Response) => {
-    const { originalUrl, expiryDate, customCode } = req.body
+    const { originalUrl, expiryDate, customCode, password } = req.body
     const userId = (req as any).userId as number
     try {
         const lastIdDbRes = await urlModel.getLatestNUrls(1)
@@ -14,11 +14,13 @@ const createShortUrl = async (req: Request, res: Response) => {
         } else {
             shortUrl = generateShortCode((lastIdDbRes[0].id as number) + 1)
         }
+        console.log(originalUrl, shortUrl, expiryDate, password)
         const createDbRes = await urlModel.create({
             originalUrl,
             shortUrl,
             userId,
-            ...(expiryDate && { expiryDate })
+            ...(expiryDate && { expiryDate }),
+            ...(password && { password })
         })
         if (createDbRes.success) {
             return res.status(200).json({ success: true, shortUrl: (createDbRes.data as Url).shortUrl })
@@ -45,7 +47,7 @@ const getOriginalUrl = async (req: Request, res: Response) => {
 const deleteByOriginalUrl = async (req: Request, res: Response) => {
     try {
         const originalUrl = req.query.originalUrl as string
-        await urlModel.softDeleteByOriginalUrl({ originalUrl })
+        await urlModel.updateUrl({ columns: { deletedAt: new Date() }, where: { originalUrl } })
         return res.status(200).json({ success: true, message: "URL deleted successfully." })
     } catch (err) {
         console.log(err)
@@ -57,10 +59,13 @@ const updateUrlMetaData = async (req: Request, res: Response, next: NextFunction
     try {
         const shortUrl = req.query.code as string
         const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
-        await urlModel.updateUrlMetaData({
-            visitCount: shortUrlRes[0].visitCount + 1,
-            accessedAt: new Date(),
-            shortUrl
+        await urlModel.updateUrl({
+            columns: {
+                visitCount: shortUrlRes[0].visitCount + 1,
+                accessedAt: new Date(),
+                shortUrl
+            },
+            where: { shortUrl }
         })
         next()
     } catch (err) {
@@ -97,7 +102,14 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
     try {
         const code = req.query.code as string
         const expiryDate = req.body.expiryDate as Date
-        await urlModel.updateUrlExpiry({ expiryDate, shortUrl: code })
+        const password = req.body.password as string
+        await urlModel.updateUrl({
+            columns: {
+                expiryDate,
+                shortUrl: code,
+                ...(password && { password }),
+            }, where: { shortUrl: code }
+        })
         return res.status(200).json({ success: true, message: "URL expiry updated successfully" })
     } catch (err) {
         console.log(err)

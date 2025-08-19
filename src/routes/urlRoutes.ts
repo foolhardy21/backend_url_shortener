@@ -7,9 +7,9 @@ const router = Router()
 const fileUpload = multer({ dest: "uploads/" })
 
 router.post("/shorten", validators.validateShortenPayload, urlController.createShortUrl)
-router.get("/redirect", validators.validateRedirectQuery, urlController.updateUrlMetaData, urlController.getOriginalUrl)
+router.patch("/redirect", validators.validateRedirectQuery, urlController.updateUrlMetaData, urlController.getOriginalUrl)
 router.delete("/", validators.validateDeleteParams, urlController.deleteByOriginalUrl)
 router.post("/bulk-shorten", fileUpload.single("urlsCsv"), validators.validateBulkShortenPayload, urlController.createBulkShortUrls)
-router.patch("/update", validators.validateRedirectQuery, urlController.updateUrlExpiry)
+router.patch("/update", validators.validateUpdateQuery, urlController.updateUrlExpiry)
 
 export default router

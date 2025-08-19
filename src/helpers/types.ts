@@ -8,6 +8,7 @@ export type Url = {
     userId: number
     deletedAt: Date
     expiryDate?: string
+    password?: string
 }
 
 enum UserTierType {

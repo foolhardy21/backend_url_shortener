@@ -20,7 +20,7 @@ describe("URL Integration Testing", () => {
         expect(shortenRes.body.success).toBeTruthy()
 
         const redirectRes = await supertest(app)
-            .get(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
 
         expect(redirectRes.status).toBe(200)
         expect(redirectRes.body.success).toBeTruthy()
@@ -60,7 +60,7 @@ describe("URL Integration Testing", () => {
         expect(deleteRes.body.success).toBeTruthy()
 
         const redirectRes = await supertest(app)
-            .get(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
         expect(redirectRes.status).toBe(400)
         expect(redirectRes.body.success).toBeFalsy()
     })
@@ -87,7 +87,7 @@ describe("URL Integration Testing", () => {
         expect(shortenRes.body.success).toBeTruthy()
 
         const redirectRes = await supertest(app)
-            .get(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
         expect(redirectRes.status).toBe(403)
         expect(redirectRes.body.success).toBeFalsy()
     })
@@ -142,5 +142,28 @@ describe("URL Integration Testing", () => {
             .send({ ...body, expiryDate: new Date() })
         expect(response.status).toBe(200)
         expect(response.body.success).toBeTruthy()
+    })
+
+    it("should validate urls's password", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body, password: "password3" })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        const failedRedirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            .send({ password: "televisionn" })
+        expect(failedRedirectRes.status).toBe(403)
+        expect(failedRedirectRes.body.success).toBeFalsy()
+
+
+        const redirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            .send({ password: "password3" })
+        expect(redirectRes.status).toBe(200)
+        expect(redirectRes.body.success).toBeTruthy()
+
     })
 })

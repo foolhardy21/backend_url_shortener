@@ -50,6 +50,11 @@ class Database {
                 expiryDate: {
                     type: DataTypes.DATE,
                     allowNull: true,
+                },
+                password: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                    unique: true,
                 }
             },
             {
@@ -104,13 +109,14 @@ class Database {
         }
     }
 
-    async create({ originalUrl, shortUrl, userId, expiryDate }: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date }): Promise<Url> {
+    async create({ originalUrl, shortUrl, userId, expiryDate, password }: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date, password?: string }): Promise<Url> {
         try {
             const instance = await this.#Url.create({
                 originalUrl,
                 shortUrl,
                 userId,
-                ...(expiryDate && { expiryDate })
+                ...(expiryDate && { expiryDate }),
+                ...(password && { password }),
             })
             return instance.toJSON() as Url
         } catch (err) {
