@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import urlModel from "../models/urlModel";
 import userModel from "../models/userModel";
-import { USER_TYPES } from "../helpers/utils";
 
 const validateShortenPayload = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -70,8 +69,6 @@ const validateDeleteParams = async (req: Request, res: Response, next: NextFunct
 
 const validateBulkShortenPayload = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const apiKeyUserId = (req as any).userId
-        if (apiKeyUserId != USER_TYPES.ENTERPRISE) return res.status(401).json({ success: false, message: "Access denied. This feature is available to Enterprise tier users only." })
         if (!req.file) return res.status(400).json({ success: false, message: "File is missing" })
         if (req.file.mimetype != "text/csv") return res.status(400).json({ success: false, message: "The file sent is not a CSV" });
         next()

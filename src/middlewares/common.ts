@@ -1,6 +1,7 @@
 import { NextFunction, Response, Request } from "express"
 import logModel from "../models/logModel"
 import userModel from "../models/userModel"
+import { USER_TYPES } from "../helpers/utils"
 
 export async function logger(req: Request, _: Response, next: NextFunction) {
     try {
@@ -36,8 +37,24 @@ export async function apiKeyValidator(req: Request, res: Response, next: NextFun
         if (userRes.length === 0) {
             return res.status(401).json({ success: false, message: "Invalid API key." })
         }
-        (req as any).tier = userRes[0].tier;
+        (req as any).userTier = userRes[0].tier;
         (req as any).userId = userRes[0].id
+        next()
+    } catch (err) {
+        console.log(err)
+        return res.status(401).json({ success: false, message: "Could not validate the API key." })
+    }
+}
+
+export async function enterpriseRoleValidator(req: Request, res: Response, next: NextFunction) {
+    try {
+        const requestApiKey = req.headers["x-api-key"]
+        let userTier = (req as any).userTier
+        if (!userTier) {
+            const [user] = await userModel.getUserByApiKey(requestApiKey as string)
+            userTier = user.tier
+        }
+        if (userTier != USER_TYPES.ENTERPRISE) return res.status(401).json({ success: false, message: "Access denied. This feature is available to Enterprise tier users only." })
         next()
     } catch (err) {
         console.log(err)
