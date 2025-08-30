@@ -1,3 +1,5 @@
+import fs from "fs"
+import path from "path"
 import { NextFunction, Response, Request } from "express"
 import logModel from "../models/logModel"
 import userModel from "../models/userModel"
@@ -59,5 +61,24 @@ export async function enterpriseRoleValidator(req: Request, res: Response, next:
     } catch (err) {
         console.log(err)
         return res.status(401).json({ success: false, message: "Could not validate the API key." })
+    }
+}
+
+export async function blacklistedUsersValidator(req: Request, res: Response, next: NextFunction) {
+    try {
+        const requestApiKey = req.headers["x-api-key"]
+        const blacklistedKeysFilePath = path.join(__dirname, "../config/blacklisted-users.txt")
+        fs.readFile(blacklistedKeysFilePath, "utf-8", (err, data) => {
+            if (err) { console.log(err) } else {
+                const apiKeysArr = data.split(",")
+                if (apiKeysArr.includes(requestApiKey as string)) {
+                    return res.status(403).json({ success: false, message: "You are not allowed to perform this action." })
+                }
+            }
+        })
+        next()
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err })
     }
 }
