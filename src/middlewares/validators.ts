@@ -52,7 +52,7 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
 const validateDeleteParams = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const originalUrl = req.query.originalUrl
-        const apiKeyUserId = (req as any).userId
+        const apiKeyUserId = (req as any).user.id
         if (!originalUrl) return res.status(400).json({ success: false, message: "Missing or empty required parameter 'originalUrl'." })
         const originalUrlRes = await urlModel.getByOriginalUrl({ originalUrl: originalUrl as string })
         if (originalUrlRes.length === 0) return res.status(401).json({ success: false, message: "This URL is not shortened yet." })

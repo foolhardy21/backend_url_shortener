@@ -39,8 +39,7 @@ export async function apiKeyValidator(req: Request, res: Response, next: NextFun
         if (userRes.length === 0) {
             return res.status(401).json({ success: false, message: "Invalid API key." })
         }
-        (req as any).userTier = userRes[0].tier;
-        (req as any).userId = userRes[0].id
+        (req as any).user = userRes[0]
         next()
     } catch (err) {
         console.log(err)
@@ -50,12 +49,7 @@ export async function apiKeyValidator(req: Request, res: Response, next: NextFun
 
 export async function enterpriseRoleValidator(req: Request, res: Response, next: NextFunction) {
     try {
-        const requestApiKey = req.headers["x-api-key"]
-        let userTier = (req as any).userTier
-        if (!userTier) {
-            const [user] = await userModel.getUserByApiKey(requestApiKey as string)
-            userTier = user.tier
-        }
+        let userTier = (req as any).user.tier
         if (userTier != USER_TYPES.ENTERPRISE) return res.status(401).json({ success: false, message: "Access denied. This feature is available to Enterprise tier users only." })
         next()
     } catch (err) {
