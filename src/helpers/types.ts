@@ -30,3 +30,11 @@ export type BulkShortenUrlObj = {
     expiryDate: Date
     customCode: string
 }
+
+export type Log = {
+    method: string,
+    url: string,
+    timestamp: Date,
+    userAgent?: string,
+    ipAddress?: string,
+}

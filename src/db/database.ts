@@ -1,12 +1,13 @@
 import path from "path"
 import { DataTypes, FindOptions, Model, Sequelize, UpdateOptions, WhereOptions } from "sequelize"
-import { Url, User } from "../helpers/types"
+import { Log, Url, User } from "../helpers/types"
 import { USER_TYPES } from "../helpers/utils"
 
 class Database {
     #sequelize
     #Url
     #User
+    #Log
 
     constructor() {
         this.#sequelize = new Sequelize({
@@ -98,6 +99,41 @@ class Database {
                 updatedAt: false,
             }
         )
+        this.#Log = this.#sequelize.define(
+            "Log",
+            {
+                id: {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true,
+                },
+                method: {
+                    type: DataTypes.TEXT,
+                    allowNull: false,
+                },
+                url: {
+                    type: DataTypes.TEXT,
+                    allowNull: false,
+                },
+                timestamp: {
+                    type: DataTypes.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+                },
+                userAgent: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                },
+                ipAddress: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                },
+            },
+            {
+                tableName: "logs",
+                underscored: true,
+                timestamps: false,
+            })
     }
 
     async initialize() {
@@ -168,6 +204,22 @@ class Database {
                 ...(options && options),
             })
             return userModels.map(userModel => userModel.toJSON() as User)
+        } catch (err) {
+            console.log(err)
+            throw err as Error
+        }
+    }
+
+    async createLog({ method, url, timestamp, userAgent, ipAddress }: { method: string, url: string, timestamp: Date, userAgent?: string, ipAddress?: string }): Promise<Log> {
+        try {
+            const instance = await this.#Log.create({
+                method,
+                url,
+                timestamp,
+                ...(userAgent && { userAgent }),
+                ...(ipAddress && { ipAddress }),
+            })
+            return instance.toJSON() as Log
         } catch (err) {
             console.log(err)
             throw err as Error

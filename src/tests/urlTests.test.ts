@@ -172,4 +172,13 @@ describe("URL Integration Testing", () => {
         expect(getUserUrlsRes.status).toBe(200)
         expect(getUserUrlsRes.body.success).toBeTruthy()
     })
+
+    it("should not allow blacklisted users", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.BLACKLIST_TEST_API_KEY as string)
+            .send({ ...body, password: "password3" })
+        expect(shortenRes.status).toBe(403)
+        expect(shortenRes.body.success).toBeFalsy()
+    })
 })
