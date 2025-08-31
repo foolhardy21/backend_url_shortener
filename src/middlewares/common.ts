@@ -82,3 +82,15 @@ export async function blacklistedUsersValidator(req: Request, res: Response, nex
         return res.status(500).json({ success: false, message: err })
     }
 }
+
+export function requestTimer(_: Request, res: Response, next: NextFunction) {
+    const startTime = Date.now()
+    const originalSend = res.send
+    res.send = function (...args) {
+        const timeElapsed = Date.now() - startTime
+        res.setHeader("X-Elapsed-Time", (timeElapsed + "ms"))
+        return originalSend.apply(res, args)
+    }
+
+    next()
+}
