@@ -5,12 +5,14 @@
 - [How to Run Test Cases Locally](#how-to-run-test-cases-locally)
 - [Load Testing](#load-testing)
 - [Schema Design](#schema-design)
+- [Changelog](./CHANGELOG.md)
 
 ### Tech Stack
 - Node.js
 - Express.js
 - TypeScript
 - SQLite
+- Sequelize
 - ESLint
 - Jest and Supertest
 
@@ -29,6 +31,9 @@
    - Add the following:
      ```env
      PORT=""
+     NODE_ENV=""
+     TEST_API_KEY=""
+     BLACKLIST_TEST_API_KEY=""
      ```
 4. **Run database migrations (if any):**
    - The database will be created automatically on first run.
