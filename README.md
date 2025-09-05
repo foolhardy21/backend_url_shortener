@@ -5,7 +5,7 @@
 - [How to Run Test Cases Locally](#how-to-run-test-cases-locally)
 - [Load Testing](#load-testing)
 - [Schema Design](#schema-design)
-- [Changelog](./CHANGELOG.md)
+- [Changelog](./docs/change_log.md)
 
 ### Tech Stack
 - Node.js

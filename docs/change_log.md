@@ -1,6 +1,6 @@
 # Version 3.1.0
 
-## Changelog
+Changelog
 **Released** Sept 5, 2025
 
 ### v3.1.0
