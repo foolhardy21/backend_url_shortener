@@ -23,6 +23,7 @@ const createShortUrl = async (req: Request, res: Response) => {
             ...(password && { password })
         })
         if (createDbRes.success) {
+            res.set("Cache-Control", "max-age=86400")
             return res.status(200).json({ success: true, shortUrl: (createDbRes.data as Url).shortUrl })
         }
     } catch (err) {
