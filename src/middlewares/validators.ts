@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import urlModel from "../models/urlModel";
 import userModel from "../models/userModel";
 
+export const shortCodeToOriginalMap = new Map()
+
 const validateShortenPayload = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { originalUrl, customCode, password } = req.body
@@ -29,7 +31,12 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
         const shortUrl = req.query.code as string
         const password = (req.body?.password || "") as string
         if (!shortUrl) return res.status(400).json({ success: false, message: "Missing or empty required query parameter 'code'." })
+        const cachedRes = shortCodeToOriginalMap.get(shortUrl)
+        if (cachedRes) {
+            return res.status(200).json({ success: true, originalUrl: cachedRes.originalUrl, createdAt: cachedRes.createdAt })
+        }
         const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
+        shortCodeToOriginalMap.set(shortUrl, shortUrlRes[0])
         if (shortUrlRes[0].deletedAt) return res.status(400).json({ success: false, message: "No URL found for the provided code." })
         if (shortUrlRes[0].expiryDate) {
             const expiryDate = new Date(shortUrlRes[0].expiryDate as string)

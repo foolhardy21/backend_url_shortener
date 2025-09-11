@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express"
 import urlModel from "../models/urlModel"
 import { generateShortCode, parseBulkShortenUrlsFile } from "../helpers/utils"
 import { BulkShortenUrlObj, Url } from "../helpers/types"
+import { shortCodeToOriginalMap } from "../middlewares/validators"
 
 const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl, expiryDate, customCode, password } = req.body
@@ -33,8 +34,13 @@ const createShortUrl = async (req: Request, res: Response) => {
 const getOriginalUrl = async (req: Request, res: Response) => {
     const code = req.query.code as string
     try {
+        const cachedRes = shortCodeToOriginalMap.get(code)
+        if (cachedRes) {
+            return res.status(200).json({ success: true, originalUrl: cachedRes.originalUrl, createdAt: cachedRes.createdAt })
+        }
         const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
         if (shortUrlRes) {
+            shortCodeToOriginalMap.set(code, shortUrlRes[0])
             return res.status(200).json({ success: true, originalUrl: shortUrlRes[0].originalUrl, createdAt: shortUrlRes[0].createdAt })
         }
     } catch (err) {

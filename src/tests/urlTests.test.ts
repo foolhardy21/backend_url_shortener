@@ -1,5 +1,8 @@
 import supertest from "supertest"
 import app from "../.."
+import urlModel from "../models/urlModel"
+
+const mockGetByShortUrl = jest.spyOn(urlModel, "getByShortUrl")
 
 describe("URL Integration Testing", () => {
     const originalUrl = "https://example.com"
@@ -180,5 +183,27 @@ describe("URL Integration Testing", () => {
             .send({ ...body, password: "password3" })
         expect(shortenRes.status).toBe(403)
         expect(shortenRes.body.success).toBeFalsy()
+    })
+
+    it("should use cache for subsequent redirects", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        const redirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirectRes.status).toBe(200)
+        expect(redirectRes.body.success).toBeTruthy()
+        expect(mockGetByShortUrl).toHaveBeenCalled()
+
+        const cacheRedirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(cacheRedirectRes.status).toBe(200)
+        expect(cacheRedirectRes.body.success).toBeTruthy()
+
+        expect(mockGetByShortUrl).toHaveBeenCalledTimes(4)
     })
 })
