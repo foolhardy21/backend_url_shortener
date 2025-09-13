@@ -24,6 +24,7 @@ const createShortUrl = async (req: Request, res: Response) => {
         })
         if (createDbRes.success) {
             res.set("Cache-Control", "max-age=86400")
+            await cache.set((createDbRes.data as Url).shortUrl, JSON.stringify(createDbRes.data))
             return res.status(200).json({ success: true, shortUrl: (createDbRes.data as Url).shortUrl })
         }
     } catch (err) {

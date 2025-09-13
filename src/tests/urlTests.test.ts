@@ -185,7 +185,7 @@ describe("URL Integration Testing", () => {
         expect(shortenRes.body.success).toBeFalsy()
     })
 
-    it("should use cache for subsequent redirects", async () => {
+    it("should use cache for redirects", async () => {
         const shortenRes = await supertest(app)
             .post("/api/url/shorten")
             .set("x-api-key", process.env.TEST_API_KEY as string)
@@ -197,13 +197,8 @@ describe("URL Integration Testing", () => {
             .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
         expect(redirectRes.status).toBe(200)
         expect(redirectRes.body.success).toBeTruthy()
-        expect(mockGetByShortUrl).toHaveBeenCalled()
+        expect(mockGetByShortUrl).not.toHaveBeenCalled()
 
-        const cacheRedirectRes = await supertest(app)
-            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
-        expect(cacheRedirectRes.status).toBe(200)
-        expect(cacheRedirectRes.body.success).toBeTruthy()
-
-        expect(mockGetByShortUrl).toHaveBeenCalledTimes(4)
+        expect(mockGetByShortUrl).toHaveBeenCalledTimes(0)
     })
 })
