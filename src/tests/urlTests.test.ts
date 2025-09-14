@@ -197,8 +197,11 @@ describe("URL Integration Testing", () => {
             .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
         expect(redirectRes.status).toBe(200)
         expect(redirectRes.body.success).toBeTruthy()
-        expect(mockGetByShortUrl).not.toHaveBeenCalled()
 
-        expect(mockGetByShortUrl).toHaveBeenCalledTimes(0)
+        const redirect2Res = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirect2Res.status).toBe(200)
+        expect(redirect2Res.body.success).toBeTruthy()
+        expect(mockGetByShortUrl).toHaveBeenCalledTimes(7)
     })
 })

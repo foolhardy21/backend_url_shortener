@@ -31,15 +31,11 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
         const password = (req.body?.password || "") as string
         if (!shortUrl) return res.status(400).json({ success: false, message: "Missing or empty required query parameter 'code'." })
         const cachedString = await cache.get(shortUrl)
-        if (cachedString) {
-            const cachedRes = JSON.parse(cachedString)
-            return res.status(200).json({ success: true, originalUrl: cachedRes.originalUrl, createdAt: cachedRes.createdAt })
-        }
-        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
-        await cache.set(shortUrl, JSON.stringify(shortUrlRes[0]))
-        if (shortUrlRes[0].deletedAt) return res.status(400).json({ success: false, message: "No URL found for the provided code." })
-        if (shortUrlRes[0].expiryDate) {
-            const expiryDate = new Date(shortUrlRes[0].expiryDate as string)
+        const shortUrlRes = cachedString ? JSON.parse(cachedString) : (await urlModel.getByShortUrl({ shortUrl }))[0]
+        await cache.set(shortUrl, JSON.stringify(shortUrlRes))
+        if (shortUrlRes.deletedAt) return res.status(400).json({ success: false, message: "No URL found for the provided code." })
+        if (shortUrlRes.expiryDate) {
+            const expiryDate = new Date(shortUrlRes.expiryDate as string)
             if (expiryDate < new Date()) {
                 return res.status(403).json({ success: false, message: "This short URL has expired. Please create a new one ot continue." })
             }
@@ -47,8 +43,9 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
         if (password) {
             const urlPassRes = await urlModel.getByPassword({ password })
             if (urlPassRes.length < 1) return res.status(403).json({ success: false, message: "This password does not exist." })
-            if (urlPassRes[0].password !== shortUrlRes[0].password) return res.status(403).json({ success: false, message: "Incorrect password for the specified URL." })
+            if (urlPassRes[0].password !== shortUrlRes.password) return res.status(403).json({ success: false, message: "Incorrect password for the specified URL." })
         }
+        (req as any).urlObj = shortUrlRes
         next()
     } catch (err) {
         console.log(err)
@@ -67,6 +64,7 @@ const validateDeleteParams = async (req: Request, res: Response, next: NextFunct
         if (originalUrlRes[0].userId != apiKeyUserId) {
             return res.status(403).json({ success: false, message: "You do not have the permission to delete this url" })
         }
+        (req as any).urlObj = originalUrlRes[0]
         next()
     } catch (err) {
         console.log(err)
@@ -102,6 +100,7 @@ const validateUpdateQuery = async (req: Request, res: Response, next: NextFuncti
             const urlPassRes = await urlModel.getByPassword({ password })
             if (urlPassRes.length > 0) return res.status(401).json({ success: false, message: "This password already exists. Please create a new one." })
         }
+        (req as any).urlObj = shortUrlRes[0]
         next()
     } catch (err) {
         console.log(err)

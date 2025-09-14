@@ -24,7 +24,6 @@ const createShortUrl = async (req: Request, res: Response) => {
         })
         if (createDbRes.success) {
             res.set("Cache-Control", "max-age=86400")
-            await cache.set((createDbRes.data as Url).shortUrl, JSON.stringify(createDbRes.data))
             return res.status(200).json({ success: true, shortUrl: (createDbRes.data as Url).shortUrl })
         }
     } catch (err) {
@@ -34,18 +33,19 @@ const createShortUrl = async (req: Request, res: Response) => {
 }
 
 const getOriginalUrl = async (req: Request, res: Response) => {
-    const code = req.query.code as string
+    // const code = req.query.code as string
+    const url = (req as any).urlObj
     try {
-        const cachedString = await cache.get(code)
-        if (cachedString) {
-            const cachedRes = JSON.parse(cachedString)
-            return res.status(200).json({ success: true, originalUrl: cachedRes.originalUrl, createdAt: cachedRes.createdAt })
-        }
-        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
-        if (shortUrlRes) {
-            await cache.set(code, JSON.stringify(shortUrlRes[0]))
-            return res.status(200).json({ success: true, originalUrl: shortUrlRes[0].originalUrl, createdAt: shortUrlRes[0].createdAt })
-        }
+        // const cachedString = await cache.get(code)
+        // if (cachedString) {
+        //     const cachedRes = JSON.parse(cachedString)
+        return res.status(200).json({ success: true, originalUrl: url.originalUrl, createdAt: url.createdAt })
+        // }
+        // const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
+        // if (shortUrlRes) {
+        //     await cache.set(code, JSON.stringify(shortUrlRes[0]))
+        //     return res.status(200).json({ success: true, originalUrl: shortUrlRes[0].originalUrl, createdAt: shortUrlRes[0].createdAt })
+        // }
     } catch (err) {
         console.log(err)
         return res.status(500).json({ success: false, message: err })
@@ -54,8 +54,11 @@ const getOriginalUrl = async (req: Request, res: Response) => {
 
 const deleteByOriginalUrl = async (req: Request, res: Response) => {
     try {
-        const originalUrl = req.query.originalUrl as string
-        await urlModel.updateUrl({ columns: { deletedAt: new Date() }, where: { originalUrl } })
+        const url = (req as any).urlObj
+        const deletedAt = new Date()
+        url.deletedAt = deletedAt
+        await urlModel.updateUrl({ columns: { deletedAt: deletedAt }, where: { originalUrl: url.originalUrl } })
+        await cache.set(url.shortUrl, JSON.stringify(url))
         return res.status(200).json({ success: true, message: "URL deleted successfully." })
     } catch (err) {
         console.log(err)
@@ -65,15 +68,16 @@ const deleteByOriginalUrl = async (req: Request, res: Response) => {
 
 const updateUrlMetaData = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const shortUrl = req.query.code as string
-        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
+        const url = (req as any).urlObj
+        url.visitCount = Number(url.visitCount) + 1
+        await cache.set(url.shortUrl, JSON.stringify(url))
         await urlModel.updateUrl({
             columns: {
-                visitCount: shortUrlRes[0].visitCount + 1,
+                visitCount: url.visitCount,
                 accessedAt: new Date(),
-                shortUrl
+                shortUrl: url.shortUrl,
             },
-            where: { shortUrl }
+            where: { shortUrl: url.shortUrl }
         })
         next()
     } catch (err) {
@@ -108,9 +112,12 @@ const createBulkShortUrls = async (req: Request, res: Response) => {
 
 const updateUrlExpiry = async (req: Request, res: Response) => {
     try {
+        const url = (req as any).urlObj
         const code = req.query.code as string
         const expiryDate = req.body.expiryDate as Date
         const password = req.body.password as string
+        url.expiryDate = expiryDate
+        url.password = password
         await urlModel.updateUrl({
             columns: {
                 expiryDate,
@@ -118,6 +125,7 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
                 ...(password && { password }),
             }, where: { shortUrl: code }
         })
+        await cache.set(url.shortUrl, JSON.stringify(url))
         return res.status(200).json({ success: true, message: "URL expiry updated successfully" })
     } catch (err) {
         console.log(err)
