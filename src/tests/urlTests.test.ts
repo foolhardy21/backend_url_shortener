@@ -204,4 +204,26 @@ describe("URL Integration Testing", () => {
         expect(redirect2Res.body.success).toBeTruthy()
         expect(mockGetByShortUrl).toHaveBeenCalledTimes(7)
     })
+
+    it("should limit the requests to a limit", async () => {
+        const limit = 100
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        for (let i = 0; i < limit; i++) {
+            const redirectRes = await supertest(app)
+                .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            expect(redirectRes.status).toBe(200)
+            expect(redirectRes.body.success).toBeTruthy()
+        }
+
+        const redirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirectRes.status).toBe(429)
+        expect(redirectRes.body.success).toBeFalsy()
+    })
 })

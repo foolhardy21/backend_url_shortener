@@ -4,6 +4,7 @@ import { NextFunction, Response, Request } from "express"
 import logModel from "../models/logModel"
 import userModel from "../models/userModel"
 import { USER_TYPES } from "../helpers/utils"
+import cache from "../db/cache"
 
 export async function logger(req: Request, _: Response, next: NextFunction) {
     try {
@@ -87,4 +88,22 @@ export function requestTimer(_: Request, res: Response, next: NextFunction) {
     }
 
     next()
+}
+
+export async function rateLimiter(req: Request, res: Response, next: NextFunction) {
+    const ip = String(req.ip)
+    try {
+        if (ip) {
+            const ipCount = await cache.increment(ip)
+            if (ipCount == 1) {
+                await cache.expire(ip, 60)
+            } else if (ipCount >= 100) {
+                return res.status(429).json({ status: false, message: "Too many requests. Please wait for atleast 60 seconds." })
+            }
+        }
+        next()
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: err?.toString() })
+    }
 }

@@ -54,6 +54,25 @@ class CacheDB {
         }
     }
 
+    async expire(key: string | Buffer, expiryTime: number = 60) {
+        try {
+            await this.#client.expire(key, expiryTime)
+        } catch (err) {
+            console.log(err)
+            throw err
+        }
+    }
+
+    async increment(key: string | Buffer) {
+        try {
+            const value = await this.#client.incr(key)
+            return value
+        } catch (err) {
+            console.log(err)
+            throw err
+        }
+    }
+
 }
 
 const cache = new CacheDB()
