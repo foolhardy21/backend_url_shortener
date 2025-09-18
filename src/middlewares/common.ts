@@ -3,7 +3,7 @@ import path from "path"
 import { NextFunction, Response, Request } from "express"
 import logModel from "../models/logModel"
 import userModel from "../models/userModel"
-import { USER_TYPES } from "../helpers/utils"
+import { RATE_LIMIT, USER_TYPES } from "../helpers/utils"
 import cache from "../db/cache"
 
 export async function logger(req: Request, _: Response, next: NextFunction) {
@@ -91,13 +91,27 @@ export function requestTimer(_: Request, res: Response, next: NextFunction) {
 }
 
 export async function rateLimiter(req: Request, res: Response, next: NextFunction) {
-    const ip = String(req.ip)
+    const url = req.url
+    let userKey = String(req.ip), routeKey = ""
+    let limit = RATE_LIMIT.DEFAULT
+
+    if (url.includes("/shorten")) {
+        userKey = req.headers["x-api-key"] as string
+        routeKey = "shorten"
+        limit = RATE_LIMIT.SHORTEN
+    }
+    else if (url.includes("/redirect")) {
+        routeKey = "redirect"
+        limit = RATE_LIMIT.REDIRECT
+    }
+
     try {
-        if (ip) {
-            const ipCount = await cache.increment(ip)
+        const cacheKey = `${routeKey}+${userKey}`
+        if (cacheKey) {
+            const ipCount = await cache.increment(cacheKey)
             if (ipCount == 1) {
-                await cache.expire(ip, 60)
-            } else if (ipCount >= 100) {
+                await cache.expire(cacheKey, 60)
+            } else if (ipCount >= limit) {
                 return res.status(429).json({ status: false, message: "Too many requests. Please wait for atleast 60 seconds." })
             }
         }

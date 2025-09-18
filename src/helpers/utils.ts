@@ -35,3 +35,9 @@ export const USER_TYPES = {
     HOBBY: "hobby",
     ENTERPRISE: "enterprise",
 }
+
+export const RATE_LIMIT = {
+    SHORTEN: 10 * 60,
+    REDIRECT: 50 * 60,
+    DEFAULT: 100,
+}

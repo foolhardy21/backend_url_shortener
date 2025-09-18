@@ -33,19 +33,9 @@ const createShortUrl = async (req: Request, res: Response) => {
 }
 
 const getOriginalUrl = async (req: Request, res: Response) => {
-    // const code = req.query.code as string
     const url = (req as any).urlObj
     try {
-        // const cachedString = await cache.get(code)
-        // if (cachedString) {
-        //     const cachedRes = JSON.parse(cachedString)
         return res.status(200).json({ success: true, originalUrl: url.originalUrl, createdAt: url.createdAt })
-        // }
-        // const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
-        // if (shortUrlRes) {
-        //     await cache.set(code, JSON.stringify(shortUrlRes[0]))
-        //     return res.status(200).json({ success: true, originalUrl: shortUrlRes[0].originalUrl, createdAt: shortUrlRes[0].createdAt })
-        // }
     } catch (err) {
         console.log(err)
         return res.status(500).json({ success: false, message: err })
