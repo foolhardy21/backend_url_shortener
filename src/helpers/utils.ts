@@ -32,6 +32,7 @@ export const parseBulkShortenUrlsFile = (file: Express.Multer.File): Promise<any
 }
 
 export const USER_TYPES = {
+    FREE: "free",
     HOBBY: "hobby",
     ENTERPRISE: "enterprise",
 }
@@ -39,5 +40,6 @@ export const USER_TYPES = {
 export const RATE_LIMIT = {
     SHORTEN: 10 * 60,
     REDIRECT: 50 * 60,
+    FREE_PLAN: 5,
     DEFAULT: 100,
 }

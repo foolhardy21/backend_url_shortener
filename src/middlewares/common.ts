@@ -99,6 +99,8 @@ export async function rateLimiter(req: Request, res: Response, next: NextFunctio
         userKey = req.headers["x-api-key"] as string
         routeKey = "shorten"
         limit = RATE_LIMIT.SHORTEN
+        const userTier = (req as any).user.tier
+        if (userTier === USER_TYPES.FREE) limit = RATE_LIMIT.FREE_PLAN
     }
     else if (url.includes("/redirect")) {
         routeKey = "redirect"
