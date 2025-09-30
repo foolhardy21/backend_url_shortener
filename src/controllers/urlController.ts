@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express"
 import urlModel from "../models/urlModel"
 import { generateShortCode, parseBulkShortenUrlsFile } from "../helpers/utils"
 import { BulkShortenUrlObj, Url } from "../helpers/types"
+import cache from "../db/cache"
 
 const createShortUrl = async (req: Request, res: Response) => {
     const { originalUrl, expiryDate, customCode, password } = req.body
@@ -22,6 +23,7 @@ const createShortUrl = async (req: Request, res: Response) => {
             ...(password && { password })
         })
         if (createDbRes.success) {
+            res.set("Cache-Control", "max-age=86400")
             return res.status(200).json({ success: true, shortUrl: (createDbRes.data as Url).shortUrl })
         }
     } catch (err) {
@@ -31,12 +33,9 @@ const createShortUrl = async (req: Request, res: Response) => {
 }
 
 const getOriginalUrl = async (req: Request, res: Response) => {
-    const code = req.query.code as string
+    const url = (req as any).urlObj
     try {
-        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl: code })
-        if (shortUrlRes) {
-            return res.status(200).json({ success: true, originalUrl: shortUrlRes[0].originalUrl, createdAt: shortUrlRes[0].createdAt })
-        }
+        return res.status(200).json({ success: true, originalUrl: url.originalUrl, createdAt: url.createdAt })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ success: false, message: err })
@@ -45,8 +44,11 @@ const getOriginalUrl = async (req: Request, res: Response) => {
 
 const deleteByOriginalUrl = async (req: Request, res: Response) => {
     try {
-        const originalUrl = req.query.originalUrl as string
-        await urlModel.updateUrl({ columns: { deletedAt: new Date() }, where: { originalUrl } })
+        const url = (req as any).urlObj
+        const deletedAt = new Date()
+        url.deletedAt = deletedAt
+        await urlModel.updateUrl({ columns: { deletedAt: deletedAt }, where: { originalUrl: url.originalUrl } })
+        await cache.set(url.shortUrl, JSON.stringify(url))
         return res.status(200).json({ success: true, message: "URL deleted successfully." })
     } catch (err) {
         console.log(err)
@@ -56,15 +58,16 @@ const deleteByOriginalUrl = async (req: Request, res: Response) => {
 
 const updateUrlMetaData = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const shortUrl = req.query.code as string
-        const shortUrlRes = await urlModel.getByShortUrl({ shortUrl })
+        const url = (req as any).urlObj
+        url.visitCount = Number(url.visitCount) + 1
+        await cache.set(url.shortUrl, JSON.stringify(url))
         await urlModel.updateUrl({
             columns: {
-                visitCount: shortUrlRes[0].visitCount + 1,
+                visitCount: url.visitCount,
                 accessedAt: new Date(),
-                shortUrl
+                shortUrl: url.shortUrl,
             },
-            where: { shortUrl }
+            where: { shortUrl: url.shortUrl }
         })
         next()
     } catch (err) {
@@ -99,9 +102,12 @@ const createBulkShortUrls = async (req: Request, res: Response) => {
 
 const updateUrlExpiry = async (req: Request, res: Response) => {
     try {
+        const url = (req as any).urlObj
         const code = req.query.code as string
         const expiryDate = req.body.expiryDate as Date
         const password = req.body.password as string
+        url.expiryDate = expiryDate
+        url.password = password
         await urlModel.updateUrl({
             columns: {
                 expiryDate,
@@ -109,6 +115,7 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
                 ...(password && { password }),
             }, where: { shortUrl: code }
         })
+        await cache.set(url.shortUrl, JSON.stringify(url))
         return res.status(200).json({ success: true, message: "URL expiry updated successfully" })
     } catch (err) {
         console.log(err)
@@ -119,8 +126,10 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
 const getUserUrls = async (req: Request, res: Response) => {
     try {
         const userId = Number(req.params.userId)
-        const urlRes = await urlModel.getByUserId({ userId })
-        return res.status(200).json({ success: true, message: "URLs fetched successfully", data: urlRes })
+        let page = Number(req.query?.page) || 1
+        let size = Number(req.query?.size) || 10
+        const urlRes = await urlModel.getByUserId({ userId, page, size })
+        return res.status(200).json({ success: true, message: "URLs fetched successfully", countPerPage: size, hasNext: urlRes.length > size, data: urlRes })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ success: false, message: err })

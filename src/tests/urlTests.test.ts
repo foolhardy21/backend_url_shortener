@@ -1,5 +1,9 @@
 import supertest from "supertest"
 import app from "../.."
+import urlModel from "../models/urlModel"
+import { RATE_LIMIT } from "../helpers/utils"
+
+const mockGetByShortUrl = jest.spyOn(urlModel, "getByShortUrl")
 
 describe("URL Integration Testing", () => {
     const originalUrl = "https://example.com"
@@ -180,5 +184,47 @@ describe("URL Integration Testing", () => {
             .send({ ...body, password: "password3" })
         expect(shortenRes.status).toBe(403)
         expect(shortenRes.body.success).toBeFalsy()
+    })
+
+    it("should use cache for redirects", async () => {
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        const redirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirectRes.status).toBe(200)
+        expect(redirectRes.body.success).toBeTruthy()
+
+        const redirect2Res = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirect2Res.status).toBe(200)
+        expect(redirect2Res.body.success).toBeTruthy()
+        expect(mockGetByShortUrl).toHaveBeenCalledTimes(7)
+    })
+
+    it("should limit the requests to a limit", async () => {
+        const limit = RATE_LIMIT.REDIRECT
+        const shortenRes = await supertest(app)
+            .post("/api/url/shorten")
+            .set("x-api-key", process.env.TEST_API_KEY as string)
+            .send({ ...body })
+        expect(shortenRes.status).toBe(200)
+        expect(shortenRes.body.success).toBeTruthy()
+
+        for (let i = 1; i < limit; i++) {
+            const redirectRes = await supertest(app)
+                .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+            expect(redirectRes.status).toBe(200)
+            expect(redirectRes.body.success).toBeTruthy()
+        }
+
+        const redirectRes = await supertest(app)
+            .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
+        expect(redirectRes.status).toBe(429)
+        expect(redirectRes.body.success).toBeFalsy()
     })
 })
