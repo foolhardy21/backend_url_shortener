@@ -1,13 +1,15 @@
 import dotenv from "dotenv"
 import express from "express"
 import urlRoutes from "./src/routes/urlRoutes"
+import { logger, requestTimer } from "./src/middlewares/common"
 
 dotenv.config()
 
 const app = express()
 
 app.use(express.json())
-
+app.use(requestTimer)
+app.use(logger)
 app.use("/api/url", urlRoutes)
 
 app.listen(process.env.PORT, () => {
