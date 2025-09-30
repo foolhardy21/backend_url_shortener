@@ -126,8 +126,10 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
 const getUserUrls = async (req: Request, res: Response) => {
     try {
         const userId = Number(req.params.userId)
-        const urlRes = await urlModel.getByUserId({ userId })
-        return res.status(200).json({ success: true, message: "URLs fetched successfully", data: urlRes })
+        let page = Number(req.query?.page) || 1
+        let size = Number(req.query?.size) || 10
+        const urlRes = await urlModel.getByUserId({ userId, page, size })
+        return res.status(200).json({ success: true, message: "URLs fetched successfully", countPerPage: size, hasNext: urlRes.length > size, data: urlRes })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ success: false, message: err })
