@@ -148,11 +148,14 @@ const getByPassword = async ({ password }: { password: string }): Promise<Url[]>
     }
 }
 
-const getByUserId = async ({ userId }: { userId: number }): Promise<Url[]> => {
+const getByUserId = async ({ userId, page = 1, size = 10 }: { userId: number, page?: number, size?: number }): Promise<Url[]> => {
     try {
         const dbRes = await db.get({
             where: { userId },
-            options: {}
+            options: {
+                limit: (size + 1),
+                offset: ((page - 1) * size)
+            }
         })
         return dbRes
     } catch (err) {
