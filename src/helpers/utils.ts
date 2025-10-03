@@ -43,3 +43,23 @@ export const RATE_LIMIT = {
     FREE_PLAN: 5,
     DEFAULT: 100,
 }
+
+export const BACKOFF_RETRIES = {
+    COUNT: 3,
+    INITIAL_DELAY: 1000,
+}
+
+export async function backoffRetries(
+    fn: Function,
+    retryCount: number = 5,
+    initialDelay: number = 1000,
+) {
+    try {
+        return await fn()
+    } catch (err) {
+        console.log("failed with ", err, retryCount)
+        if (retryCount <= 1) throw err as Error
+        await new Promise(resolve => setTimeout(resolve, initialDelay))
+        return backoffRetries(fn, retryCount - 1, initialDelay * 2)
+    }
+}
