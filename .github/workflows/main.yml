@@ -1,0 +1,24 @@
+name: Deploy application
+on:
+  push:
+    branches: 
+      - main
+
+jobs:
+  run_build_job:
+    name: Deploy application Job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to project
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@4
+        with:
+          node-version: 24
+        
+      - name: Installing dependencies
+        run: npm install
+
+      - name: Building
+        run: npm run build
