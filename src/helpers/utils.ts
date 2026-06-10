@@ -20,7 +20,7 @@ export const parseBulkShortenUrlsFile = (file: Express.Multer.File): Promise<Bul
             .on("data", (data) => rows.push(data))
             .on("end", () => {
                 for (const row of rows) {
-                    for (const key in row) {
+                    for (const key of Object.keys(row) as Array<keyof BulkShortenUrlObj>) {
                         if (!row[key]) delete row[key]
                     }
                 }

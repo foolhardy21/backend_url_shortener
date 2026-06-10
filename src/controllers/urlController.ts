@@ -106,7 +106,7 @@ const updateUrlExpiry = async (req: Request, res: Response) => {
         const code = req.query.code as string
         const expiryDate = req.body.expiryDate as Date
         const password = req.body.password as string
-        url.expiryDate = expiryDate
+        url.expiryDate = expiryDate?.toString()
         url.password = password
         await urlModel.updateUrl({
             columns: {
