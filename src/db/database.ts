@@ -145,6 +145,10 @@ class Database {
         }
     }
 
+    async close() {
+        await this.#sequelize.close()
+    }
+
     async create({ originalUrl, shortUrl, userId, expiryDate, password }: { originalUrl: string, shortUrl: string, userId: number, expiryDate?: Date, password?: string }): Promise<Url> {
         try {
             const instance = await this.#Url.create({

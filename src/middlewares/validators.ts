@@ -45,7 +45,7 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
             if (urlPassRes.length < 1) return res.status(403).json({ success: false, message: "This password does not exist." })
             if (urlPassRes[0].password !== shortUrlRes.password) return res.status(403).json({ success: false, message: "Incorrect password for the specified URL." })
         }
-        (req as any).urlObj = shortUrlRes
+        (req as unknown as { urlObj: typeof shortUrlRes }).urlObj = shortUrlRes
         next()
     } catch (err) {
         console.log(err)
@@ -56,7 +56,7 @@ const validateRedirectQuery = async (req: Request, res: Response, next: NextFunc
 const validateDeleteParams = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const originalUrl = req.query.originalUrl
-        const apiKeyUserId = (req as any).user.id
+        const apiKeyUserId = (req as unknown as { user: { id: number } }).user.id
         if (!originalUrl) return res.status(400).json({ success: false, message: "Missing or empty required parameter 'originalUrl'." })
         const originalUrlRes = await urlModel.getByOriginalUrl({ originalUrl: originalUrl as string })
         if (originalUrlRes.length === 0) return res.status(401).json({ success: false, message: "This URL is not shortened yet." })
@@ -64,7 +64,7 @@ const validateDeleteParams = async (req: Request, res: Response, next: NextFunct
         if (originalUrlRes[0].userId != apiKeyUserId) {
             return res.status(403).json({ success: false, message: "You do not have the permission to delete this url" })
         }
-        (req as any).urlObj = originalUrlRes[0]
+        (req as unknown as { urlObj: typeof originalUrlRes[0] }).urlObj = originalUrlRes[0]
         next()
     } catch (err) {
         console.log(err)
@@ -100,7 +100,7 @@ const validateUpdateQuery = async (req: Request, res: Response, next: NextFuncti
             const urlPassRes = await urlModel.getByPassword({ password })
             if (urlPassRes.length > 0) return res.status(401).json({ success: false, message: "This password already exists. Please create a new one." })
         }
-        (req as any).urlObj = shortUrlRes[0]
+        (req as unknown as { urlObj: typeof shortUrlRes[0] }).urlObj = shortUrlRes[0]
         next()
     } catch (err) {
         console.log(err)

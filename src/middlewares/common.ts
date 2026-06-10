@@ -7,15 +7,15 @@ import { RATE_LIMIT, USER_TYPES } from "../helpers/utils"
 import cache from "../db/cache"
 
 export async function logger(req: Request, _: Response, next: NextFunction) {
+    const timestamp = new Date()
+    const url = req.originalUrl
+    const method = req.method
+    const userAgent = req.headers["user-agent"]
+    const ipAddress = req.ip
+
+    console.log(method + " " + url, " at ", timestamp, " from ", userAgent, " | ", ipAddress)
+
     try {
-        const timestamp = new Date()
-        const url = req.originalUrl
-        const method = req.method
-        const userAgent = req.headers["user-agent"]
-        const ipAddress = req.ip
-
-        console.log(method + " " + url, " at ", timestamp, " from ", userAgent, " | ", ipAddress)
-
         await logModel.createLog({
             url,
             method,
@@ -25,9 +25,8 @@ export async function logger(req: Request, _: Response, next: NextFunction) {
         })
     } catch (err) {
         console.log(err)
-    } finally {
-        next()
     }
+    next()
 }
 
 export async function apiKeyValidator(req: Request, res: Response, next: NextFunction) {
@@ -40,7 +39,7 @@ export async function apiKeyValidator(req: Request, res: Response, next: NextFun
         if (userRes.length === 0) {
             return res.status(401).json({ success: false, message: "Invalid API key." })
         }
-        (req as any).user = userRes[0]
+        (req as unknown as { user: typeof userRes[0] }).user = userRes[0]
         next()
     } catch (err) {
         console.log(err)
@@ -50,7 +49,7 @@ export async function apiKeyValidator(req: Request, res: Response, next: NextFun
 
 export async function enterpriseRoleValidator(req: Request, res: Response, next: NextFunction) {
     try {
-        let userTier = (req as any).user.tier
+        const userTier = (req as unknown as { user: { tier: string } }).user.tier
         if (userTier != USER_TYPES.ENTERPRISE) return res.status(401).json({ success: false, message: "Access denied. This feature is available to Enterprise tier users only." })
         next()
     } catch (err) {
@@ -99,7 +98,7 @@ export async function rateLimiter(req: Request, res: Response, next: NextFunctio
         userKey = req.headers["x-api-key"] as string
         routeKey = "shorten"
         limit = RATE_LIMIT.SHORTEN
-        const userTier = (req as any).user.tier
+        const userTier = (req as unknown as { user: { tier: string } }).user.tier
         if (userTier === USER_TYPES.FREE) limit = RATE_LIMIT.FREE_PLAN
     }
     else if (url.includes("/redirect")) {

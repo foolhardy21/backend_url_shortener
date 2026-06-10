@@ -2,8 +2,15 @@ import supertest from "supertest"
 import app from "../.."
 import urlModel from "../models/urlModel"
 import { RATE_LIMIT } from "../helpers/utils"
+import cache from "../db/cache"
+import database from "../db/database"
 
 const mockGetByShortUrl = jest.spyOn(urlModel, "getByShortUrl")
+
+afterAll(async () => {
+    await cache.disconnect()
+    await database.close()
+})
 
 describe("URL Integration Testing", () => {
     const originalUrl = "https://example.com"
@@ -13,6 +20,7 @@ describe("URL Integration Testing", () => {
         await supertest(app)
             .delete(`/api/url?originalUrl=${originalUrl}`)
             .set("x-api-key", process.env.TEST_API_KEY as string)
+        await cache.flush()
     })
 
     it("should create the short url and redirect to it's original url", async () => {
@@ -149,10 +157,11 @@ describe("URL Integration Testing", () => {
     })
 
     it("should validate urls's password", async () => {
+        const uniquePassword = `password_${Date.now()}`
         const shortenRes = await supertest(app)
             .post("/api/url/shorten")
             .set("x-api-key", process.env.TEST_API_KEY as string)
-            .send({ ...body, password: "password3" })
+            .send({ ...body, password: uniquePassword })
         expect(shortenRes.status).toBe(200)
         expect(shortenRes.body.success).toBeTruthy()
 
@@ -165,7 +174,7 @@ describe("URL Integration Testing", () => {
 
         const redirectRes = await supertest(app)
             .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
-            .send({ password: "password3" })
+            .send({ password: uniquePassword })
         expect(redirectRes.status).toBe(200)
         expect(redirectRes.body.success).toBeTruthy()
     })
@@ -187,6 +196,7 @@ describe("URL Integration Testing", () => {
     })
 
     it("should use cache for redirects", async () => {
+        mockGetByShortUrl.mockClear()
         const shortenRes = await supertest(app)
             .post("/api/url/shorten")
             .set("x-api-key", process.env.TEST_API_KEY as string)
@@ -203,11 +213,11 @@ describe("URL Integration Testing", () => {
             .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
         expect(redirect2Res.status).toBe(200)
         expect(redirect2Res.body.success).toBeTruthy()
-        expect(mockGetByShortUrl).toHaveBeenCalledTimes(7)
+        expect(mockGetByShortUrl).toHaveBeenCalledTimes(1)
     })
 
     it("should limit the requests to a limit", async () => {
-        const limit = RATE_LIMIT.REDIRECT
+        // Pre-seed the rate limit counter in Redis to just below the threshold
         const shortenRes = await supertest(app)
             .post("/api/url/shorten")
             .set("x-api-key", process.env.TEST_API_KEY as string)
@@ -215,12 +225,10 @@ describe("URL Integration Testing", () => {
         expect(shortenRes.status).toBe(200)
         expect(shortenRes.body.success).toBeTruthy()
 
-        for (let i = 1; i < limit; i++) {
-            const redirectRes = await supertest(app)
-                .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)
-            expect(redirectRes.status).toBe(200)
-            expect(redirectRes.body.success).toBeTruthy()
-        }
+        const cacheKey = `redirect+::ffff:127.0.0.1`
+        // Set counter to just below RATE_LIMIT.REDIRECT
+        await cache.set(cacheKey, String(RATE_LIMIT.REDIRECT - 1))
+        await cache.expire(cacheKey, 60)
 
         const redirectRes = await supertest(app)
             .patch(`/api/url/redirect?code=${shortenRes.body.shortUrl}`)

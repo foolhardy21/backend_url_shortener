@@ -35,7 +35,7 @@ class CacheDB {
         }
     }
 
-    async hSet(key: string | Buffer, value: any) {
+    async hSet(key: string | Buffer, value: Record<string, string | number>) {
         try {
             await this.#client.hSet(key, value)
         } catch (err) {
@@ -71,6 +71,14 @@ class CacheDB {
             console.log(err)
             throw err
         }
+    }
+
+    async disconnect() {
+        await this.#client.quit()
+    }
+
+    async flush() {
+        await this.#client.flushAll()
     }
 
 }

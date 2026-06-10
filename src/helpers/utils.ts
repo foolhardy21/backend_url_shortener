@@ -1,5 +1,6 @@
 import fs from "fs"
 import csv from "csv-parser"
+import { BulkShortenUrlObj } from "./types"
 
 export function generateShortCode(num: number): string {
     const chars: string = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -11,9 +12,9 @@ export function generateShortCode(num: number): string {
     return encoded
 }
 
-export const parseBulkShortenUrlsFile = (file: Express.Multer.File): Promise<any> => {
+export const parseBulkShortenUrlsFile = (file: Express.Multer.File): Promise<BulkShortenUrlObj[]> => {
     return new Promise((resolve, reject) => {
-        let rows: any = []
+        const rows: BulkShortenUrlObj[] = []
         fs.createReadStream(file.path)
             .pipe(csv())
             .on("data", (data) => rows.push(data))
@@ -49,11 +50,11 @@ export const BACKOFF_RETRIES = {
     INITIAL_DELAY: 1000,
 }
 
-export async function backoffRetries(
-    fn: Function,
+export async function backoffRetries<T>(
+    fn: () => Promise<T>,
     retryCount: number = 5,
     initialDelay: number = 1000,
-) {
+): Promise<T> {
     try {
         return await fn()
     } catch (err) {
